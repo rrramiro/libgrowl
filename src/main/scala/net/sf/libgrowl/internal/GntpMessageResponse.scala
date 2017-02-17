@@ -36,7 +36,7 @@ case class GntpOkMessage(
 case class GntpErrorMessage(
   internalNotificationId: Option[Long],
   respondingType: MessageType,
-  status: GntpErrorStatus,
+  status: Option[GntpErrorStatus],
   description: String
 ) extends GntpMessageResponse {
   val messageType: MessageType = MessageType.ERROR

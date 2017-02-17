@@ -7,6 +7,7 @@ import java.nio.charset.{Charset, StandardCharsets}
 
 import net.sf.libgrowl.IResponse
 import net.sf.libgrowl.MessageType.MessageType
+import net.sf.libgrowl.internal.Encryption.EncryptionType
 
 object Message {
 
@@ -50,29 +51,32 @@ object Message {
         line = in.readLine
       }
       responseText = buffer.toString
+      System.out.println("------------------------")
+      System.out.println(responseText)
+      System.out.println("------------------------")
       val response = GntpMessageResponseParser.parse(responseText)
       writer.close()
       out.close()
       in.close()
       socket.close()
-      System.out.println("------------------------")
-      System.out.println(responseText)
-      System.out.println("------------------------")
       System.out.println(response)
 
 
     } catch {
       case e: Throwable =>
+        e.printStackTrace()
         return IResponse.ERROR
     }
     if (responseText == null) return IResponse.ERROR
     if (responseText.contains("-OK")) return IResponse.OK
     IResponse.ERROR
   }
+
 }
 
-abstract class Message protected(val messageType: MessageType, encryption: Encryption) extends Headers {
-
+abstract class Message protected(val messageType: MessageType, encryption: EncryptionType) {
+  implicit val messageBuilder: MessageBuilder = new MessageBuilder
+  import MessageHeader._
   ORIGIN_MACHINE_NAME(Message.MACHINE_NAME)
   ORIGIN_SOFTWARE_NAME(Message.SOFTWARE_NAME)
   ORIGIN_SOFTWARE_VERSION(Message.SOFTWARE_VERSION)
@@ -85,22 +89,25 @@ abstract class Message protected(val messageType: MessageType, encryption: Encry
 
 
   def buildMessage: String = {
-    val headers = messageBuilder.buffer.toString().stripSuffix(IProtocol.LINE_BREAK)
+    val out = new ByteArrayOutputStream()
+    val headers = messageBuilder.buffer.toString()//.stripSuffix(IProtocol.LINE_BREAK)
     messageBuilder.buffer.clear()
-    messageBuilder.buffer.append(s"${IProtocol.GNTP_VERSION} $messageType $encryption${IProtocol.LINE_BREAK}")
-    messageBuilder.buffer.append(new String(encryption(headers.getBytes(Message.ENCODING)), Message.ENCODING ))
-    lineBreak()
-    for ((id, data) <- messageBuilder.resources) {
-      lineBreak()
-      IDENTIFIER(id)
-      LENGTH(data.length)
-      lineBreak()
-      messageBuilder.buffer.append(new String(encryption(data), Message.ENCODING))
-      //for (byte b : data) { mBuffer.append((char) b); }
-      lineBreak()
-    }
+    out.write(s"${IProtocol.GNTP_VERSION} $messageType $encryption${IProtocol.LINE_BREAK}".getBytes(Message.ENCODING))
+    out.write(encryption(headers.getBytes(Message.ENCODING)))
+    //out.write((IProtocol.LINE_BREAK * 2).getBytes(Message.ENCODING))
+//    lineBreak()
+//    for ((id, data) <- messageBuilder.resources) {
+//      lineBreak()
+//      IDENTIFIER(id)
+//      LENGTH(data.length)
+//      lineBreak()
+//      messageBuilder.buffer.append(new String(encryption(data), Message.ENCODING))
+//      //for (byte b : data) { mBuffer.append((char) b); }
+//      lineBreak()
+//    }
     // always have a line break and an empty line at the message end
-    messageBuilder.buffer.toString
+//    messageBuilder.buffer.toString
+    out.toString
   }
 
 }

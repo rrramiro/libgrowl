@@ -23,9 +23,9 @@ object GntpMessageResponseParser {
   )
 
   def parse(s: String): GntpMessageResponse = {
-    val splitted: Array[String] = s.split(IProtocol.LINE_BREAK) //separatorSplitter.split(s)
-    assert(splitted.nonEmpty, "Empty message received from Growl")
-    val iter: Iterator[String] = splitted.iterator
+    val split: Array[String] = s.split(IProtocol.LINE_BREAK) //separatorSplitter.split(s)
+    assert(split.nonEmpty, "Empty message received from Growl")
+    val iter: Iterator[String] = split.iterator
     val statusLine: String = iter.next()
     assert(statusLine.startsWith(IProtocol.GNTP_VERSION), "Unknown protocol version")
     val statusLineIterable: Array[String] = statusLine.split(' ') //statusLineSplitter.split(statusLine)
@@ -33,8 +33,8 @@ object GntpMessageResponseParser {
     val messageType: MessageType = MessageType.withName(messageTypeText)
     val headers = new collection.mutable.HashMap[String, String]
     while (iter.hasNext) {
-      val splitedHeader: Array[String] = iter.next().split(":", 2)
-      headers.put(splitedHeader(0), splitedHeader(1).trim)
+      val splitHeader: Array[String] = iter.next().split(":", 2)
+      headers.put(splitHeader(0), splitHeader(1).trim)
     }
     messageType match {
       case MessageType.OK =>
@@ -76,18 +76,19 @@ object GntpMessageResponseParser {
     )
   }
 
-  implicit class HeaderMapWrapper(headers: Map[String, String]) extends Headers{
+  implicit class HeaderMapWrapper(headers: Map[String, String]){
+    import MessageHeader._
     private def getRequiredValue(gntpMessageHeader: MessageHeader): String = {
       headers.getOrElse(gntpMessageHeader.toString, throw new RuntimeException(s"Required header ${gntpMessageHeader.toString} not found"))
     }
 
-    def getRespondingType: MessageType = MessageType.withName(getRequiredValue(RESPONSE_ACTION))
+    def getRespondingType: MessageType = Try(MessageType.withName(getRequiredValue(RESPONSE_ACTION))).getOrElse(MessageType.ERROR)
 
     def getNotificationInternalId: Option[Long] = headers.get(NOTIFICATION_INTERNAL_ID.toString).map(_.toLong)
 
     def getNotificationId: Option[String] = headers.get(NOTIFICATION_ID.toString)
 
-    def getErrorCode: GntpErrorStatus = GntpErrorStatus(getRequiredValue(ERROR_CODE).toInt)
+    def getErrorCode: Option[GntpErrorStatus] = headers.get(ERROR_CODE.toString).map{ errorCode => GntpErrorStatus(errorCode.toInt) }
 
     def getErrorDescription: String = getRequiredValue(ERROR_DESCRIPTION)
 

@@ -1,5 +1,6 @@
 package net.sf.libgrowl
 
+import net.sf.libgrowl.internal.Encryption.EncryptionType
 import net.sf.libgrowl.internal._
 
 import scala.collection.mutable
@@ -44,7 +45,7 @@ import scala.collection.mutable
   * @param port
   * port number
   */
-class GrowlConnector(val host: String = "localhost", val port: Int = IProtocol.DEFAULT_GROWL_PORT, encryption: Encryption = Encryption.NONE) {
+class GrowlConnector(val host: String = "localhost", val port: Int = IProtocol.DEFAULT_GROWL_PORT, encryption: EncryptionType = Encryption.NONE) {
   private val mRegisteredNotifications = mutable.HashSet[NotificationType]()
 
   /**
