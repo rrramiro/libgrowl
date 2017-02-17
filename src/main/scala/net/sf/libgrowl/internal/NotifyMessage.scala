@@ -1,5 +1,6 @@
 package net.sf.libgrowl.internal
 
+import net.sf.libgrowl.internal.Encryption.EncryptionType
 import net.sf.libgrowl.{MessageType, Notification}
 
 /*
@@ -7,7 +8,8 @@ import net.sf.libgrowl.{MessageType, Notification}
     * notification.getCallbackId(); if (callbackId != null) {
     * header(IProtocol.HEADER_NOTIFICATION_CALLBACK_ID, callbackId); }
     */
-class NotifyMessage(val notification: Notification, encryption: Encryption) extends Message(MessageType.NOTIFY, encryption) {
+class NotifyMessage(val notification: Notification, encryption: EncryptionType) extends Message(MessageType.NOTIFY, encryption) {
+  import MessageHeader._
   APPLICATION_NAME(notification.application.name)
   NOTIFICATION_NAME(notification.notificationType.notificationTypeId)
   notification.id.foreach { NOTIFICATION_ID(_) }

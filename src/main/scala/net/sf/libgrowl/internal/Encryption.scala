@@ -1,11 +1,21 @@
 package net.sf.libgrowl.internal
 
-import java.nio.charset.StandardCharsets
 import java.security.{MessageDigest, SecureRandom}
 import javax.crypto.{Cipher, SecretKey, SecretKeyFactory}
 import javax.crypto.spec.{DESKeySpec, IvParameterSpec}
 
+import net.sf.libgrowl.internal.Encryption.EncryptionType
+
 object Encryption {
+
+  val DEFAULT_RANDOM_SALT_ALGORITHM: String = "SHA1PRNG"
+  val DEFAULT_SALT_SIZE: Int = 16
+  val DEFAULT_KEY_HASH_ALGORITHM: String = "SHA-512" //MD5 SHA1 SHA256 SHA384
+  val DEFAULT_ALGORITHM: String = "DES" // AES 3DES
+  val DEFAULT_TRANSFORMATION: String = "DES/CBC/ " ///PKCS5Padding
+  val NONE_ENCRYPTION_ALGORITHM: String = "NONE"
+  val BINARY_HASH_FUNCTION: String = "MD5"
+
   /**
    * get MD5 hash of input value
    *
@@ -13,63 +23,75 @@ object Encryption {
    * @return MD5 hash as byte array or <code>null</code>
    */
   def md5(input: Array[Byte]): String = {
-    val md5 = MessageDigest.getInstance("MD5")
+    val md5 = MessageDigest.getInstance(BINARY_HASH_FUNCTION)
     md5.reset()
     md5.update(input)
     toHexadecimal(md5.digest)
   }
 
   def toHexadecimal(bytes: Array[Byte]): String = {
-    bytes.map { md5Byte => Integer.toHexString(0xFF & md5Byte) }.mkString
+    bytes.map("%02x".format(_)).mkString.toUpperCase
   }
 
-  object NONE extends Encryption{
+  def fromHexadecimal(hex: String): Array[Byte] = {
+    assert(hex.length % 2 == 0, s"Invalid hex string [$hex]")
+    hex.replaceAll("[^0-9A-Fa-f]", "").sliding(2, 2).toArray.map(Integer.parseInt(_, 16).toByte)
+  }
+
+  type EncryptionType = (Array[Byte] => Array[Byte])
+
+  object NONE extends EncryptionType {
     override def apply(in: Array[Byte]): Array[Byte] = in
     override def toString: String = Encryption.NONE_ENCRYPTION_ALGORITHM
   }
 
-  val DEFAULT_RANDOM_SALT_ALGORITHM: String = "SHA1PRNG"
-  val DEFAULT_SALT_SIZE: Int = 16
-  val DEFAULT_KEY_HASH_ALGORITHM: String = "SHA-512"
-  val DEFAULT_ALGORITHM: String = "DES"
-  val DEFAULT_TRANSFORMATION: String = "DES/CBC/PKCS5Padding"
-  val NONE_ENCRYPTION_ALGORITHM: String = "NONE"
-  val BINARY_HASH_FUNCTION: String = "MD5"
-
-  def getSalt: Array[Byte] = {
-    val random = SecureRandom.getInstance(DEFAULT_RANDOM_SALT_ALGORITHM)
-    random.setSeed(getSeed)
-    val saltArray: Array[Byte] = new Array[Byte](DEFAULT_SALT_SIZE)
+  def getSalt(randomSaltAlgorithm: String = DEFAULT_RANDOM_SALT_ALGORITHM, saltSize: Int = DEFAULT_SALT_SIZE, seedGenerator: => Long = System.currentTimeMillis()): Array[Byte] = {
+    val random = SecureRandom.getInstance(randomSaltAlgorithm)
+    random.setSeed(seedGenerator)
+    val saltArray: Array[Byte] = new Array[Byte](saltSize)
     random.nextBytes(saltArray)
     saltArray
   }
 
-  protected def getSeed: Long = System.currentTimeMillis()
-
-  def apply(passphrase: String): Encryption = {
-    val salt: Array[Byte] = Encryption.getSalt
-    val key: Array[Byte] = hash(passphrase.getBytes(StandardCharsets.UTF_8) ++ salt)
-    val secretKey: SecretKey = SecretKeyFactory.getInstance(Encryption.DEFAULT_ALGORITHM).generateSecret(new DESKeySpec(key))
+  def apply(
+    passphrase: String,
+    saltGenerator: => Array[Byte] = Encryption.getSalt(),
+    algorithm: String = Encryption.DEFAULT_ALGORITHM,
+    keyHashAlgorithm: String = Encryption.DEFAULT_KEY_HASH_ALGORITHM,
+    transformation: String = Encryption.DEFAULT_TRANSFORMATION
+  ): Encryption = {
+    val salt = saltGenerator
+    val passphraseBytes = passphrase.getBytes(Message.ENCODING)
+    println("passphrase: " + toHexadecimal(passphraseBytes))
+    println("salt: " + toHexadecimal(salt))
+    val keyBasis = (passphraseBytes.toSeq ++ salt.toSeq).toArray
+    println("keybasis: " + toHexadecimal(keyBasis))
+    val key: Array[Byte] = hash(keyHashAlgorithm, keyBasis)
+    println("key: " + toHexadecimal(key))
+    val secretKey: SecretKey = SecretKeyFactory.getInstance(algorithm).generateSecret(new DESKeySpec(key))
     val iv: IvParameterSpec = new IvParameterSpec(secretKey.getEncoded)
-    new EncryptionPassphrase(salt, hash(key), secretKey, iv)
+    val keyHash = hash(keyHashAlgorithm, key)
+    println("keyHash: " + toHexadecimal(keyHash))
+    println("keyval: " + iv.getIV.map{ o => ( o & 0xff).toString}.mkString("[", ", ", "]") )
+    new Encryption(salt, hash(keyHashAlgorithm, key), secretKey, iv, algorithm, keyHashAlgorithm, transformation)
   }
 
-  private def hash(keyToUse: Array[Byte]): Array[Byte] = {
-    MessageDigest.getInstance(Encryption.DEFAULT_KEY_HASH_ALGORITHM).digest(keyToUse)
+  private def hash(keyHashAlgorithm: String, keyToUse: Array[Byte]): Array[Byte] = {
+    MessageDigest.getInstance(keyHashAlgorithm).digest(keyToUse)
   }
 }
 
-trait Encryption extends ((Array[Byte]) => Array[Byte])
+class Encryption(
+  salt: Array[Byte],
+  keyHashed: Array[Byte],
+  secretKey: SecretKey,
+  iv: IvParameterSpec,
+  algorithm: String,
+  keyHashAlgorithm: String,
+  transformation: String
+) extends EncryptionType {
 
-
-class EncryptionPassphrase(
-  val salt: Array[Byte],
-  val keyHashed: Array[Byte],
-  val secretKey: SecretKey,
-  val iv: IvParameterSpec
-) extends Encryption {
-
-  private val cipher = Cipher.getInstance(Encryption.DEFAULT_TRANSFORMATION)
+  private val cipher = Cipher.getInstance(transformation)
 
   override def apply(in: Array[Byte]): Array[Byte] = {
     cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv)
@@ -77,5 +99,5 @@ class EncryptionPassphrase(
   }
 
   override def toString: String =
-    s"${Encryption.DEFAULT_ALGORITHM}:${Encryption.toHexadecimal(iv.getIV)} ${Encryption.DEFAULT_KEY_HASH_ALGORITHM.replaceAll("-", "")}:${Encryption.toHexadecimal(keyHashed)}.${Encryption.toHexadecimal(salt)}"
+    s"$algorithm:${Encryption.toHexadecimal(iv.getIV)} ${keyHashAlgorithm.replaceAll("-", "")}:${Encryption.toHexadecimal(keyHashed)}.${Encryption.toHexadecimal(salt)}"
 }

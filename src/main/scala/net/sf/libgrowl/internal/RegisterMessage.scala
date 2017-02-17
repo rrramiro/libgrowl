@@ -1,8 +1,10 @@
 package net.sf.libgrowl.internal
 
+import net.sf.libgrowl.internal.Encryption.EncryptionType
 import net.sf.libgrowl.{Application, MessageType, NotificationType}
 
-class RegisterMessage(val mApplication: Application, val notificationTypes: Seq[NotificationType], encryption: Encryption) extends Message(MessageType.REGISTER, encryption) {
+class RegisterMessage(val mApplication: Application, val notificationTypes: Seq[NotificationType], encryption: EncryptionType) extends Message(MessageType.REGISTER, encryption) {
+  import MessageHeader._
   APPLICATION_NAME(mApplication.name)
   mApplication.icon.foreach{ APPLICATION_ICON(_) }
   NOTIFICATION_COUNT(notificationTypes.length)
