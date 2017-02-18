@@ -33,8 +33,12 @@ object GntpMessageResponseParser {
     val messageType: MessageType = MessageType.withName(messageTypeText)
     val headers = new collection.mutable.HashMap[String, String]
     while (iter.hasNext) {
-      val splitHeader: Array[String] = iter.next().split(":", 2)
-      headers.put(splitHeader(0), splitHeader(1).trim)
+      val line = iter.next()
+      line.split(":", 2).toList match {
+        case headerName :: headerValue :: Nil =>
+          headers.put(headerName, headerValue.trim)
+        case _ => // ignore empty lines
+      }
     }
     messageType match {
       case MessageType.OK =>
