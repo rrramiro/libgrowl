@@ -1,7 +1,7 @@
 package net.sf.libgrowl.internal
 
 import java.awt.image.BufferedImage
-import java.io.{ByteArrayOutputStream, File, FileInputStream}
+import java.io.{ByteArrayOutputStream, File, FileInputStream, InputStream}
 import javax.imageio.ImageIO
 import javax.swing.ImageIcon
 
@@ -28,11 +28,7 @@ object ResourceIcon {
     val g2 = iconImage.createGraphics
     icon.paintIcon(null, g2, 0, 0)
     g2.dispose()
-    val outStream = new ByteArrayOutputStream
-    ImageIO.write(iconImage, getBestFormat(ImageIO.getWriterFormatNames), outStream)
-    val mImageData = outStream.toByteArray
-    outStream.close()
-    new ResourceIcon(mImageData)
+    apply(iconImage)
   }
 
   def apply(iconFile: File): ResourceIcon = {
@@ -45,6 +41,14 @@ object ResourceIcon {
     } else {
       throw new Exception(s"Can not read file: ${iconFile.getAbsolutePath}")
     }
+  }
+
+  def apply(icon: BufferedImage): ResourceIcon = {
+    val output: ByteArrayOutputStream = new ByteArrayOutputStream
+    if (!ImageIO.write(icon, getBestFormat(ImageIO.getWriterFormatNames), output)) {
+      throw new IllegalStateException("Could not read icon data")
+    }
+    new ResourceIcon(output.toByteArray)
   }
 
   private def getBestFormat(formatNames: Array[String]): String = {

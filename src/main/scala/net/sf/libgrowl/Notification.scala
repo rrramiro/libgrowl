@@ -44,9 +44,9 @@ case class Notification(
   notificationType: NotificationType,
   title: String,
   text: Option[String],
+  icon: Option[Icon] = None,
   priority: Priority.Value = Priority.NORMAL,
   sticky: Boolean = false,
-  icon: Option[Icon] = None,
   urlCallback: Option[String] = None,
   coalescingId: Option[String] = None,
   id: Option[String] = None

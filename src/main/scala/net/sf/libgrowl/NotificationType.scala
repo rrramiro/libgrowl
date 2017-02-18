@@ -1,6 +1,6 @@
 package net.sf.libgrowl
 
-import net.sf.libgrowl.internal.UrlIcon
+import net.sf.libgrowl.internal.{Icon, UrlIcon}
 
 /**
  * A notification type groups all the similar notifications of your application.
@@ -11,10 +11,4 @@ import net.sf.libgrowl.internal.UrlIcon
  * @author Bananeweizen
  *
  */
-case class NotificationType(notificationTypeId: String, displayName: String, enabled: Boolean = true, icon: Option[UrlIcon] = None)
-
-object NotificationType{
-  def apply(displayName: String): NotificationType = {
-    apply(displayName, displayName)
-  }
-}
+case class NotificationType(notificationTypeId: String, displayName: String, icon: Option[Icon] = None, enabled: Boolean = true)

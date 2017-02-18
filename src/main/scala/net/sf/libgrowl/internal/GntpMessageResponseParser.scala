@@ -23,12 +23,12 @@ object GntpMessageResponseParser {
   )
 
   def parse(s: String): GntpMessageResponse = {
-    val split: Array[String] = s.split(IProtocol.LINE_BREAK) //separatorSplitter.split(s)
+    val split: Array[String] = s.split(Message.LINE_BREAK)
     assert(split.nonEmpty, "Empty message received from Growl")
     val iter: Iterator[String] = split.iterator
     val statusLine: String = iter.next()
-    assert(statusLine.startsWith(IProtocol.GNTP_VERSION), "Unknown protocol version")
-    val statusLineIterable: Array[String] = statusLine.split(' ') //statusLineSplitter.split(statusLine)
+    assert(statusLine.startsWith(Message.GNTP_VERSION), "Unknown protocol version")
+    val statusLineIterable: Array[String] = statusLine.split(' ')
     val messageTypeText: String = statusLineIterable(1).stripPrefix("-")
     val messageType: MessageType = MessageType.withName(messageTypeText)
     val headers = new collection.mutable.HashMap[String, String]
