@@ -1,5 +1,8 @@
 package net.sf.libgrowl
 
+import java.net.Socket
+
+import net.sf.libgrowl.MessageType.MessageType
 import net.sf.libgrowl.internal.Encryption.EncryptionType
 import net.sf.libgrowl.internal._
 
@@ -45,7 +48,7 @@ import scala.collection.mutable
   * @param port
   * port number
   */
-class GrowlConnector(val host: String = "localhost", val port: Int = IProtocol.DEFAULT_GROWL_PORT, encryption: EncryptionType = Encryption.NONE) {
+class GrowlConnector(val host: String = "localhost", val port: Int = GrowlConnector.DEFAULT_GROWL_PORT, val timeout: Int = GrowlConnector.DEFAULT_TIMEOUT, encryption: EncryptionType = Encryption.NONE) {
   private val mRegisteredNotifications = mutable.HashSet[NotificationType]()
 
   /**
@@ -62,13 +65,15 @@ class GrowlConnector(val host: String = "localhost", val port: Int = IProtocol.D
     * all notification types supported by your application
     * @return response, see { @link IResponse}
     */
-  final def register(application: Application, notificationTypes: NotificationType*): Int = {
+  final def register(application: Application, notificationTypes: NotificationType*): MessageType = {
     val message = new RegisterMessage(application, notificationTypes, encryption)
-    val result = Message.send(host, port, message.buildMessage)
-    if (result == IResponse.OK) {
+    val socket: Socket = new Socket(host, port)
+    socket.setSoTimeout(timeout)
+    val result = Message.send(socket, message.buildMessage)
+    if (result.messageType == MessageType.OK) {
       mRegisteredNotifications ++= notificationTypes
     }
-    result
+    result.messageType
   }
 
   /**
@@ -82,13 +87,20 @@ class GrowlConnector(val host: String = "localhost", val port: Int = IProtocol.D
     * notification to send to Growl
     * @return response, see { @link IResponse}
     */
-  final def notify(notification: Notification): Int = {
+  final def notify(notification: Notification): MessageType = {
     if (!isRegistered(notification.notificationType)) {
       System.err.println("You need to register the notification type " + notification.notificationType.displayName + " before using it in notifications.")
     }
     val message = new NotifyMessage(notification, encryption)
-    Message.send(host, port, message.buildMessage)
+    val socket: Socket = new Socket(host, port)
+    socket.setSoTimeout(timeout)
+    Message.send(socket, message.buildMessage).messageType
   }
 
   private def isRegistered(notificationType: NotificationType) = mRegisteredNotifications.contains(notificationType)
+}
+
+object GrowlConnector{
+  val DEFAULT_GROWL_PORT = 23053
+  val DEFAULT_TIMEOUT = 10000
 }

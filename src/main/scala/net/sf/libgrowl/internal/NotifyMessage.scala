@@ -20,14 +20,14 @@ class NotifyMessage(val notification: Notification, encryption: EncryptionType) 
   notification.icon.foreach{ NOTIFICATION_ICON(_) }
   notification.coalescingId.foreach { NOTIFICATION_COALESCING_ID(_) }
 
-  notification.urlCallback.fold{
-    notification.id.foreach{
-      id =>
-        NOTIFICATION_CALLBACK_CONTEXT(id)
-        NOTIFICATION_CALLBACK_CONTEXT_TYPE("int")
-    }
-  }{
-    NOTIFICATION_CALLBACK_TARGET(_)
-  }
+//  notification.urlCallback.fold{
+//    notification.id.foreach{
+//      id =>
+//        NOTIFICATION_CALLBACK_CONTEXT(id)
+//        NOTIFICATION_CALLBACK_CONTEXT_TYPE("int")
+//    }
+//  }{
+//    NOTIFICATION_CALLBACK_TARGET(_)
+//  }
   notification.id.foreach{ NOTIFICATION_INTERNAL_ID(_) }
 }

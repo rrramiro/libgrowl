@@ -32,6 +32,8 @@ object MessageHeader {
   val ERROR_DESCRIPTION: MessageHeader = new MessageHeader("Error-Description")
   val IDENTIFIER: MessageHeader = new MessageHeader("Identifier")
   val LENGTH: MessageHeader = new MessageHeader("Length")
+
+  private val X_GROWL_RESOURCE = "x-growl-resource://"
 }
 
 class MessageHeader(headerName: String) {
@@ -42,17 +44,17 @@ class MessageHeader(headerName: String) {
   def apply(value: Int)(implicit messageBuilder: MessageBuilder): Unit = apply(String.valueOf(value))
 
   def apply(value: String)(implicit messageBuilder: MessageBuilder): Unit = {
-    messageBuilder.buffer.append(s"$headerName: ${sanitize(value)}${IProtocol.LINE_BREAK}")
+    messageBuilder.buffer.append(s"$headerName: ${sanitize(value)}${Message.LINE_BREAK}")
   }
 
   def apply(value: Icon)(implicit messageBuilder: MessageBuilder): Unit = value match {
     case UrlIcon(url) => apply(url)
     case r @ ResourceIcon(_) =>
-      apply(IProtocol.X_GROWL_RESOURCE + r.resourceId)
+      apply(MessageHeader.X_GROWL_RESOURCE + r.resourceId)
       messageBuilder.resources.put(r.resourceId, r.imageData)
   }
 
-  def sanitize(value: String): String = value.replaceAll(IProtocol.LINE_BREAK, "\n")
+  def sanitize(value: String): String = value.replaceAll(Message.LINE_BREAK, "\n")
 
   override def toString: String = headerName
 }
