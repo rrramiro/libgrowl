@@ -12,7 +12,7 @@ object Encryption {
   val DEFAULT_SALT_SIZE: Int = 16
   val DEFAULT_KEY_HASH_ALGORITHM: String = "SHA-512" //MD5 SHA1 SHA256 SHA384
   val DEFAULT_ALGORITHM: String = "DES" // AES 3DES
-  val DEFAULT_TRANSFORMATION: String = "DES/CBC/ " ///PKCS5Padding
+  val DEFAULT_TRANSFORMATION: String = "DES/CBC/PKCS5Padding"
   val NONE_ENCRYPTION_ALGORITHM: String = "NONE"
   val BINARY_HASH_FUNCTION: String = "MD5"
 
@@ -62,17 +62,10 @@ object Encryption {
   ): Encryption = {
     val salt = saltGenerator
     val passphraseBytes = passphrase.getBytes(Message.ENCODING)
-    println("passphrase: " + toHexadecimal(passphraseBytes))
-    println("salt: " + toHexadecimal(salt))
     val keyBasis = (passphraseBytes.toSeq ++ salt.toSeq).toArray
-    println("keybasis: " + toHexadecimal(keyBasis))
     val key: Array[Byte] = hash(keyHashAlgorithm, keyBasis)
-    println("key: " + toHexadecimal(key))
     val secretKey: SecretKey = SecretKeyFactory.getInstance(algorithm).generateSecret(new DESKeySpec(key))
     val iv: IvParameterSpec = new IvParameterSpec(secretKey.getEncoded)
-    val keyHash = hash(keyHashAlgorithm, key)
-    println("keyHash: " + toHexadecimal(keyHash))
-    println("keyval: " + iv.getIV.map{ o => ( o & 0xff).toString}.mkString("[", ", ", "]") )
     new Encryption(salt, hash(keyHashAlgorithm, key), secretKey, iv, algorithm, keyHashAlgorithm, transformation)
   }
 
@@ -92,11 +85,9 @@ class Encryption(
 ) extends EncryptionType {
 
   private val cipher = Cipher.getInstance(transformation)
+  cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv)
 
-  override def apply(in: Array[Byte]): Array[Byte] = {
-    cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv)
-    cipher.doFinal(in)
-  }
+  override def apply(in: Array[Byte]): Array[Byte] = cipher.doFinal(in)
 
   override def toString: String =
     s"$algorithm:${Encryption.toHexadecimal(iv.getIV)} ${keyHashAlgorithm.replaceAll("-", "")}:${Encryption.toHexadecimal(keyHashed)}.${Encryption.toHexadecimal(salt)}"

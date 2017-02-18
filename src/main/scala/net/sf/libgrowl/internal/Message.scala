@@ -29,21 +29,22 @@ object Message {
 
   val ENCODING: Charset = StandardCharsets.UTF_8
 
-  def send(host: String, port: Int, mMessageText: String): Int = {
+  def send(host: String, port: Int, messageBytes: Array[Byte]): Int = {
     var responseText: String = null
-    var messageText = mMessageText
     try {
-      while (!messageText.endsWith(IProtocol.LINE_BREAK + IProtocol.LINE_BREAK)) messageText = messageText + IProtocol.LINE_BREAK
+//      while (!messageText.endsWith(IProtocol.LINE_BREAK + IProtocol.LINE_BREAK)) {
+//        println("@@@@@@@")
+//        messageText = messageText + IProtocol.LINE_BREAK
+//      }
       // now start the communication
       val socket = new Socket(host, port)
       socket.setSoTimeout(10000)
       val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
-      val out = new OutputStreamWriter(socket.getOutputStream, ENCODING)
-      val writer = new PrintWriter(out)
-      writer.write(messageText)
-      writer.flush()
+      val out = socket.getOutputStream
+      out.write(messageBytes)
+      out.flush()
       System.out.println("------------------------")
-      System.out.println(messageText)
+      System.out.println(new String(messageBytes, ENCODING))
       val buffer = new StringBuilder
       var line = in.readLine
       while (line != null && !line.isEmpty) {
@@ -55,7 +56,6 @@ object Message {
       System.out.println(responseText)
       System.out.println("------------------------")
       val response = GntpMessageResponseParser.parse(responseText)
-      writer.close()
       out.close()
       in.close()
       socket.close()
@@ -88,9 +88,9 @@ abstract class Message protected(val messageType: MessageType, encryption: Encry
   }
 
 
-  def buildMessage: String = {
+  def buildMessage: Array[Byte] = {
     val out = new ByteArrayOutputStream()
-    val headers = messageBuilder.buffer.toString()//.stripSuffix(IProtocol.LINE_BREAK)
+    val headers = messageBuilder.buffer.toString()
     messageBuilder.buffer.clear()
     out.write(s"${IProtocol.GNTP_VERSION} $messageType $encryption${IProtocol.LINE_BREAK}".getBytes(Message.ENCODING))
     out.write(encryption(headers.getBytes(Message.ENCODING)))
@@ -107,7 +107,10 @@ abstract class Message protected(val messageType: MessageType, encryption: Encry
 //    }
     // always have a line break and an empty line at the message end
 //    messageBuilder.buffer.toString
-    out.toString
+    out.write(s"${IProtocol.LINE_BREAK}${IProtocol.LINE_BREAK}".getBytes(Message.ENCODING))
+    out.flush()
+    out.close()
+    out.toByteArray
   }
 
 }
