@@ -22,11 +22,13 @@ object MessageHeader {
   val NOTIFICATION_STICKY: MessageHeader = new MessageHeader("Notification-Sticky")
   val NOTIFICATION_PRIORITY: MessageHeader = new MessageHeader("Notification-Priority")
   val NOTIFICATION_COALESCING_ID: MessageHeader = new MessageHeader("Notification-Coalescing-ID")
+
   val NOTIFICATION_CALLBACK_TARGET: MessageHeader = new MessageHeader("Notification-Callback-Target")
   val NOTIFICATION_CALLBACK_CONTEXT: MessageHeader = new MessageHeader("Notification-Callback-Context")
   val NOTIFICATION_CALLBACK_CONTEXT_TYPE: MessageHeader = new MessageHeader("Notification-Callback-Context-Type")
   val NOTIFICATION_CALLBACK_RESULT: MessageHeader = new MessageHeader("Notification-Callback-Result")
   val NOTIFICATION_CALLBACK_TIMESTAMP: MessageHeader = new MessageHeader("Notification-Callback-Timestamp")
+
   val RESPONSE_ACTION: MessageHeader = new MessageHeader("Response-Action")
   val ERROR_CODE: MessageHeader = new MessageHeader("Error-Code")
   val ERROR_DESCRIPTION: MessageHeader = new MessageHeader("Error-Description")

@@ -34,10 +34,10 @@ class GrowlConnectorSuite extends FunSuite {
       notificationType6
     ) === MessageType.OK)
     val notification1 = Notification(application, notificationType1, "Notification title 1", Some("Notification text 1"))
-    assert(growl.notify(notification1) === MessageType.OK)
+    assert(growl.notify(notification1).head === MessageType.OK)
 
     val notification2 = Notification(application, notificationType2, "Notification title 2", Some("Notification text 2"), getImage(APPLICATION_ICON))
-    assert(growl.notify(notification2) === MessageType.OK)
+    assert(growl.notify(notification2).head === MessageType.OK)
   }
 
   private def getImage(img: String) = Some(ResourceIcon(ImageIO.read(this.getClass.getClassLoader.getResourceAsStream(img))))

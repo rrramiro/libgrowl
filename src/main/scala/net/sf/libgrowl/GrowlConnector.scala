@@ -66,10 +66,10 @@ class GrowlConnector(val host: String = "localhost", val port: Int = GrowlConnec
     * @return response, see { @link IResponse}
     */
   final def register(application: Application, notificationTypes: NotificationType*): MessageType = {
-    val message = new RegisterMessage(application, notificationTypes, encryption)
+    val message = Message.registerMessage(application, notificationTypes, encryption)
     val socket: Socket = new Socket(host, port)
     socket.setSoTimeout(timeout)
-    val result = Message.send(socket, message.buildMessage)
+    val result = Message.send(socket, message).head
     if (result.messageType == MessageType.OK) {
       mRegisteredNotifications ++= notificationTypes
     }
@@ -87,14 +87,14 @@ class GrowlConnector(val host: String = "localhost", val port: Int = GrowlConnec
     * notification to send to Growl
     * @return response, see { @link IResponse}
     */
-  final def notify(notification: Notification): MessageType = {
+  final def notify(notification: Notification): Seq[MessageType] = {
     if (!isRegistered(notification.notificationType)) {
       System.err.println("You need to register the notification type " + notification.notificationType.displayName + " before using it in notifications.")
     }
-    val message = new NotifyMessage(notification, encryption)
+    val message = Message.notifyMessage(notification, encryption)
     val socket: Socket = new Socket(host, port)
     socket.setSoTimeout(timeout)
-    Message.send(socket, message.buildMessage).messageType
+    Message.send(socket, message).map {_.messageType}
   }
 
   private def isRegistered(notificationType: NotificationType) = mRegisteredNotifications.contains(notificationType)
