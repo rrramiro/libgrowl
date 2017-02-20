@@ -41,6 +41,30 @@ object HashAlgorithm extends Enumeration {
   val SHA512 = Value("SHA-512")
 }
 
-object EncryptionAlgorithm extends Enumeration {
-  val DES, AES, DESede = Value
+object EncryptionAlgorithm {
+
+  sealed trait Value {
+    val name: String
+    val code: String
+
+    override def toString: String = name
+  }
+
+  case object DES extends Value {
+    val name = "DES"
+    val code = "DES"
+  }
+
+  case object AES extends Value {
+    val name = "AES"
+    val code = "AES"
+  }
+
+  case object DESede extends Value {
+    val name = "DESede"
+    val code = "3DES"
+  }
+
 }
+
+

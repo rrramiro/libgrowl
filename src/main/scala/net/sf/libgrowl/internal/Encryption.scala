@@ -2,7 +2,7 @@ package net.sf.libgrowl.internal
 
 import java.security.{MessageDigest, SecureRandom}
 import javax.crypto.{Cipher, SecretKey, SecretKeyFactory}
-import javax.crypto.spec.{DESKeySpec, DESedeKeySpec, IvParameterSpec}
+import javax.crypto.spec._
 
 import net.sf.libgrowl.{EncryptionAlgorithm, HashAlgorithm}
 import net.sf.libgrowl.internal.Encryption.EncryptionType
@@ -11,7 +11,7 @@ object Encryption {
 
   val DEFAULT_RANDOM_SALT_ALGORITHM: String = "SHA1PRNG"
   val DEFAULT_SALT_SIZE: Int = 16
-  val DEFAULT_TRANSFORMATION: String = "CBC/PKCS5Padding"
+  val DEFAULT_TRANSFORMATION: String = "ECB/PKCS5Padding"
   val NONE_ENCRYPTION_ALGORITHM: String = "NONE"
   val BINARY_HASH_FUNCTION: String = "MD5"
 
@@ -62,16 +62,17 @@ object Encryption {
     val passphraseBytes = passphrase.getBytes(Message.ENCODING)
     val keyBasis = passphraseBytes ++ salt
     val key: Array[Byte] = hash(keyHashAlgorithm, keyBasis)
-    val secretKey: SecretKey = SecretKeyFactory.getInstance(algorithm.toString).generateSecret(keySpec(algorithm, key))
-    val iv: IvParameterSpec = new IvParameterSpec(secretKey.getEncoded)
-    new Encryption(salt, hash(keyHashAlgorithm, key), secretKey, iv, algorithm, keyHashAlgorithm)
+    val secretKey: SecretKey = getSecretKey(algorithm, key)
+    new Encryption(salt, hash(keyHashAlgorithm, key), secretKey,  algorithm, keyHashAlgorithm)
   }
 
-  private def keySpec(algorithm: EncryptionAlgorithm.Value, key: Array[Byte]) = algorithm match {
+  private def getSecretKey(algorithm: EncryptionAlgorithm.Value, key: Array[Byte]) = algorithm match {
     case EncryptionAlgorithm.DES =>
-      new DESKeySpec(key)
-    case _ =>
-      new DESedeKeySpec(key)
+      SecretKeyFactory.getInstance(algorithm.toString).generateSecret(new DESKeySpec(key))
+    case EncryptionAlgorithm.DESede =>
+      SecretKeyFactory.getInstance(algorithm.toString).generateSecret(new DESedeKeySpec(key))
+    case EncryptionAlgorithm.AES =>
+      new SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(new PBEKeySpec(null, key, 65536, 128)).getEncoded, "AES")
   }
 
   private def hash(keyHashAlgorithm: HashAlgorithm.Value, keyToUse: Array[Byte]): Array[Byte] = {
@@ -83,16 +84,20 @@ class Encryption(
   salt: Array[Byte],
   keyHashed: Array[Byte],
   secretKey: SecretKey,
-  iv: IvParameterSpec,
   algorithm: EncryptionAlgorithm.Value,
   keyHashAlgorithm: HashAlgorithm.Value
 ) extends EncryptionType {
 
-  private val cipher = Cipher.getInstance(s"$algorithm/${Encryption.DEFAULT_TRANSFORMATION}")
-  cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv)
+  private val (cipher, ivArray) = {
+    val _cipher = Cipher.getInstance(s"$algorithm/${Encryption.DEFAULT_TRANSFORMATION}")
+    _cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+    assert(_cipher.getIV != null)
+    _cipher -> _cipher.getIV
+  }
 
   override def apply(in: Array[Byte]): Array[Byte] = cipher.doFinal(in)
 
-  override def toString: String =
-    s"$algorithm:${Encryption.toHexadecimal(iv.getIV)} ${keyHashAlgorithm.toString.replaceAll("-", "")}:${Encryption.toHexadecimal(keyHashed)}.${Encryption.toHexadecimal(salt)}"
+  override def toString: String = {
+    s"${algorithm.code}:${Encryption.toHexadecimal(ivArray)} ${keyHashAlgorithm.toString.replaceAll("-", "")}:${Encryption.toHexadecimal(keyHashed)}.${Encryption.toHexadecimal(salt)}"
+  }
 }
