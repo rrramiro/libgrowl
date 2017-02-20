@@ -2,17 +2,16 @@ package net.sf.libgrowl.internal
 
 import java.security.{MessageDigest, SecureRandom}
 import javax.crypto.{Cipher, SecretKey, SecretKeyFactory}
-import javax.crypto.spec.{DESKeySpec, IvParameterSpec}
+import javax.crypto.spec.{DESKeySpec, DESedeKeySpec, IvParameterSpec}
 
+import net.sf.libgrowl.{EncryptionAlgorithm, HashAlgorithm}
 import net.sf.libgrowl.internal.Encryption.EncryptionType
 
 object Encryption {
 
   val DEFAULT_RANDOM_SALT_ALGORITHM: String = "SHA1PRNG"
   val DEFAULT_SALT_SIZE: Int = 16
-  val DEFAULT_KEY_HASH_ALGORITHM: String = "SHA-512" //MD5 SHA1 SHA256 SHA384
-  val DEFAULT_ALGORITHM: String = "DES" // AES 3DES
-  val DEFAULT_TRANSFORMATION: String = "DES/CBC/PKCS5Padding"
+  val DEFAULT_TRANSFORMATION: String = "CBC/PKCS5Padding"
   val NONE_ENCRYPTION_ALGORITHM: String = "NONE"
   val BINARY_HASH_FUNCTION: String = "MD5"
 
@@ -55,22 +54,28 @@ object Encryption {
 
   def apply(
     passphrase: String,
-    saltGenerator: => Array[Byte] = Encryption.getSalt(),
-    algorithm: String = Encryption.DEFAULT_ALGORITHM,
-    keyHashAlgorithm: String = Encryption.DEFAULT_KEY_HASH_ALGORITHM,
-    transformation: String = Encryption.DEFAULT_TRANSFORMATION
+    algorithm: EncryptionAlgorithm.Value = EncryptionAlgorithm.DES,
+    keyHashAlgorithm: HashAlgorithm.Value = HashAlgorithm.SHA512,
+    saltGenerator: => Array[Byte] = Encryption.getSalt()
   ): Encryption = {
     val salt = saltGenerator
     val passphraseBytes = passphrase.getBytes(Message.ENCODING)
-    val keyBasis = (passphraseBytes.toSeq ++ salt.toSeq).toArray
+    val keyBasis = passphraseBytes ++ salt
     val key: Array[Byte] = hash(keyHashAlgorithm, keyBasis)
-    val secretKey: SecretKey = SecretKeyFactory.getInstance(algorithm).generateSecret(new DESKeySpec(key))
+    val secretKey: SecretKey = SecretKeyFactory.getInstance(algorithm.toString).generateSecret(keySpec(algorithm, key))
     val iv: IvParameterSpec = new IvParameterSpec(secretKey.getEncoded)
-    new Encryption(salt, hash(keyHashAlgorithm, key), secretKey, iv, algorithm, keyHashAlgorithm, transformation)
+    new Encryption(salt, hash(keyHashAlgorithm, key), secretKey, iv, algorithm, keyHashAlgorithm)
   }
 
-  private def hash(keyHashAlgorithm: String, keyToUse: Array[Byte]): Array[Byte] = {
-    MessageDigest.getInstance(keyHashAlgorithm).digest(keyToUse)
+  private def keySpec(algorithm: EncryptionAlgorithm.Value, key: Array[Byte]) = algorithm match {
+    case EncryptionAlgorithm.DES =>
+      new DESKeySpec(key)
+    case _ =>
+      new DESedeKeySpec(key)
+  }
+
+  private def hash(keyHashAlgorithm: HashAlgorithm.Value, keyToUse: Array[Byte]): Array[Byte] = {
+    MessageDigest.getInstance(keyHashAlgorithm.toString).digest(keyToUse)
   }
 }
 
@@ -79,16 +84,15 @@ class Encryption(
   keyHashed: Array[Byte],
   secretKey: SecretKey,
   iv: IvParameterSpec,
-  algorithm: String,
-  keyHashAlgorithm: String,
-  transformation: String
+  algorithm: EncryptionAlgorithm.Value,
+  keyHashAlgorithm: HashAlgorithm.Value
 ) extends EncryptionType {
 
-  private val cipher = Cipher.getInstance(transformation)
+  private val cipher = Cipher.getInstance(s"$algorithm/${Encryption.DEFAULT_TRANSFORMATION}")
   cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv)
 
   override def apply(in: Array[Byte]): Array[Byte] = cipher.doFinal(in)
 
   override def toString: String =
-    s"$algorithm:${Encryption.toHexadecimal(iv.getIV)} ${keyHashAlgorithm.replaceAll("-", "")}:${Encryption.toHexadecimal(keyHashed)}.${Encryption.toHexadecimal(salt)}"
+    s"$algorithm:${Encryption.toHexadecimal(iv.getIV)} ${keyHashAlgorithm.toString.replaceAll("-", "")}:${Encryption.toHexadecimal(keyHashed)}.${Encryption.toHexadecimal(salt)}"
 }

@@ -2,8 +2,8 @@ package net.sf.libgrowl.internal
 
 import java.util.Date
 
-import net.sf.libgrowl.GntpCallbackResult.GntpCallbackResult
-import net.sf.libgrowl.GntpErrorStatus.GntpErrorStatus
+import net.sf.libgrowl.CallbackResult
+import net.sf.libgrowl.ErrorStatus
 import net.sf.libgrowl.MessageType
 import net.sf.libgrowl.MessageType.MessageType
 
@@ -16,7 +16,7 @@ trait GntpMessageResponse {
 case class GntpCallbackMessage(
   internalNotificationId: Option[Long],
   notificationId: Option[String],
-  callbackResult: GntpCallbackResult,
+  callbackResult: CallbackResult.Value,
   context: String,
   contextType: String,
   timestamp: Date
@@ -36,7 +36,7 @@ case class GntpOkMessage(
 case class GntpErrorMessage(
   internalNotificationId: Option[Long],
   respondingType: MessageType,
-  status: Option[GntpErrorStatus],
+  status: Option[ErrorStatus.Value],
   description: String
 ) extends GntpMessageResponse {
   val messageType: MessageType = MessageType.ERROR
