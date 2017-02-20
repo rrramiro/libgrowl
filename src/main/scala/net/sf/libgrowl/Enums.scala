@@ -15,9 +15,7 @@ object MessageType extends Enumeration {
   val REGISTER, NOTIFY, OK, CALLBACK, ERROR = Value
 }
 
-object GntpErrorStatus extends Enumeration {
-  type GntpErrorStatus = Value
-
+object ErrorStatus extends Enumeration {
   val RESERVED = Value(100)
   val TIMED_OUT = Value(200)
   val NETWORK_FAILURE = Value(201)
@@ -32,8 +30,17 @@ object GntpErrorStatus extends Enumeration {
 
 }
 
-object GntpCallbackResult extends Enumeration {
-  type GntpCallbackResult = Value
+object CallbackResult extends Enumeration {
   val CLICK, CLICKED, CLOSE, CLOSED, TIMEOUT, TIMEDOUT = Value
+}
 
+object HashAlgorithm extends Enumeration {
+  val MD5 = Value
+  val SHA1 = Value("SHA-256")
+  val SHA384 = Value("SHA-384")
+  val SHA512 = Value("SHA-512")
+}
+
+object EncryptionAlgorithm extends Enumeration {
+  val DES, AES, DESede = Value
 }

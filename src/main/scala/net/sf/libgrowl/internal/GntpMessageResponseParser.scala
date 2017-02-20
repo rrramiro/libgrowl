@@ -4,9 +4,9 @@ package net.sf.libgrowl.internal
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import net.sf.libgrowl.GntpCallbackResult.GntpCallbackResult
-import net.sf.libgrowl.GntpErrorStatus.GntpErrorStatus
-import net.sf.libgrowl.{GntpCallbackResult, GntpErrorStatus, MessageType}
+import net.sf.libgrowl.CallbackResult
+import net.sf.libgrowl.ErrorStatus
+import net.sf.libgrowl.{CallbackResult, ErrorStatus, MessageType}
 import net.sf.libgrowl.MessageType.MessageType
 
 import scala.util.{Failure, Success, Try}
@@ -92,11 +92,11 @@ object GntpMessageResponseParser {
 
     def getNotificationId: Option[String] = headers.get(NOTIFICATION_ID.toString)
 
-    def getErrorCode: Option[GntpErrorStatus] = headers.get(ERROR_CODE.toString).map{ errorCode => GntpErrorStatus(errorCode.toInt) }
+    def getErrorCode: Option[ErrorStatus.Value] = headers.get(ERROR_CODE.toString).map{ errorCode => ErrorStatus(errorCode.toInt) }
 
     def getErrorDescription: String = getRequiredValue(ERROR_DESCRIPTION)
 
-    def getNotificationCallbackResult: GntpCallbackResult = GntpCallbackResult.withName(getRequiredValue(NOTIFICATION_CALLBACK_RESULT))
+    def getNotificationCallbackResult: CallbackResult.Value = CallbackResult.withName(getRequiredValue(NOTIFICATION_CALLBACK_RESULT))
 
     def getNotificationCallbackContext: String = getRequiredValue(NOTIFICATION_CALLBACK_CONTEXT)
 
