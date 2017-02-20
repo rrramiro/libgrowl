@@ -15,7 +15,7 @@ class GrowlConnectorSuite extends FunSuite {
   val PING_ICON: String = APPLICATION_ICON
 
   test("notification"){
-    val growl = new GrowlConnector("localhost", encryption = Encryption("password"))
+    val growl = new GrowlConnector("localhost", encryption = Encryption("password", EncryptionAlgorithm.AES))
 
     val application = Application("Application name", getImage(APPLICATION_ICON))
     val notificationType1 = NotificationType("NT1", "Notification type 1", getImage(RING_ICON))
@@ -32,12 +32,16 @@ class GrowlConnectorSuite extends FunSuite {
       notificationType4,
       notificationType5,
       notificationType6
-    ) === MessageType.OK)
+    ))
     val notification1 = Notification(application, notificationType1, "Notification title 1", Some("Notification text 1"))
-    assert(growl.notify(notification1).head === MessageType.OK)
+    val r1 = growl.notify(notification1).head
+    println("@@@@@@@@@@@@@@@@")
+    println(r1)
+    println("@@@@@@@@@@@@@@@@")
+    assert(r1.messageType === MessageType.OK)
 
     val notification2 = Notification(application, notificationType2, "Notification title 2", Some("Notification text 2"), getImage(APPLICATION_ICON))
-    assert(growl.notify(notification2).head === MessageType.OK)
+    assert(growl.notify(notification2).head.messageType === MessageType.OK)
   }
 
   private def getImage(img: String) = Some(ResourceIcon(ImageIO.read(this.getClass.getClassLoader.getResourceAsStream(img))))
