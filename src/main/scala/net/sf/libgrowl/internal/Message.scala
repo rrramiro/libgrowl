@@ -5,6 +5,7 @@ import java.net.Socket
 import java.nio.charset.{Charset, StandardCharsets}
 import java.util.Scanner
 
+import net.sf.libgrowl.MessageType.MessageType
 import net.sf.libgrowl.{Application, MessageType, Notification, NotificationType}
 import net.sf.libgrowl.internal.Encryption.EncryptionType
 import net.sf.libgrowl.internal.MessageHeader.{APPLICATION_ICON, APPLICATION_NAME, NOTIFICATION_COALESCING_ID, NOTIFICATION_COUNT, NOTIFICATION_DISPLAY_NAME, NOTIFICATION_ENABLED, NOTIFICATION_ICON, NOTIFICATION_ID, NOTIFICATION_INTERNAL_ID, NOTIFICATION_NAME, NOTIFICATION_PRIORITY, NOTIFICATION_STICKY, NOTIFICATION_TEXT, NOTIFICATION_TITLE, _}
@@ -23,6 +24,54 @@ object Message {
 
   val ENCODING: Charset = StandardCharsets.UTF_8
 
+  def parse(s: String): GntpMessageResponse = {
+    val split: Array[String] = s.split(Message.LINE_BREAK)
+    assert(split.nonEmpty, "Empty message received from Growl")
+    val iter: Iterator[String] = split.iterator
+    val statusLine: String = iter.next()
+    assert(statusLine.startsWith(Message.GNTP_VERSION), "Unknown protocol version")
+    val statusLineIterable: Array[String] = statusLine.split(' ')
+    val messageTypeText: String = statusLineIterable(1).stripPrefix("-")
+    val messageType: MessageType = MessageType.withName(messageTypeText)
+    val headersMap = new collection.mutable.HashMap[String, String]
+    while (iter.hasNext) {
+      val line = iter.next()
+      line.split(":", 2).toList match {
+        case headerName :: headerValue :: Nil =>
+          headersMap.put(headerName, headerValue.trim)
+        case _ => // ignore empty lines
+      }
+    }
+    implicit val headers = headersMap.toMap
+
+    messageType match {
+      case MessageType.OK =>
+        GntpOkMessage(
+          NOTIFICATION_INTERNAL_ID.getOptionalLong,
+          RESPONSE_ACTION.getMessageType,
+          NOTIFICATION_ID.getOptionalString
+        )
+      case MessageType.CALLBACK =>
+        GntpCallbackMessage(
+          NOTIFICATION_INTERNAL_ID.getOptionalLong,
+          NOTIFICATION_ID.getOptionalString,
+          NOTIFICATION_CALLBACK_RESULT.getCallbackResult,
+          NOTIFICATION_CALLBACK_CONTEXT.getRequiredString,
+          NOTIFICATION_CALLBACK_CONTEXT_TYPE.getRequiredString,
+          NOTIFICATION_CALLBACK_TIMESTAMP.getDate
+        )
+      case MessageType.ERROR =>
+        GntpErrorMessage(
+          NOTIFICATION_INTERNAL_ID.getOptionalLong,
+          RESPONSE_ACTION.getMessageType,
+          ERROR_CODE.getErrorCode,
+          ERROR_DESCRIPTION.getRequiredString
+        )
+      case _ =>
+        throw new IllegalStateException("Unknown response message type: " + messageType)
+    }
+  }
+
   def send(socket: Socket, messageBytes: Array[Byte])(implicit ec: ExecutionContext): (GntpMessageResponse, Option[Future[GntpMessageResponse]]) = {
     val in = socket.getInputStream
     val out = socket.getOutputStream
@@ -39,14 +88,14 @@ object Message {
 
     val responseMessage = if (scanner.hasNext) {
       val msg = scanner.next()
-      GntpMessageResponseParser.parse(msg)
+      parse(msg)
     } else {
       GntpErrorMessage(None, MessageType.ERROR, None, "No repsonse.")
     }
 
     val callbackFuture = if (scanner.hasNext) {
       Some(Future {
-        val callbackResponse = GntpMessageResponseParser.parse(scanner.next())
+        val callbackResponse = parse(scanner.next())
         closeAll()
         callbackResponse
       })

@@ -1,6 +1,12 @@
 package net.sf.libgrowl.internal
 
-import net.sf.libgrowl.Priority
+import java.text.SimpleDateFormat
+import java.util.Date
+
+import net.sf.libgrowl.MessageType.MessageType
+import net.sf.libgrowl.{CallbackResult, ErrorStatus, MessageType, Priority}
+
+import scala.util.{Failure, Success, Try}
 
 object MessageHeader {
   val ORIGIN_MACHINE_NAME: MessageHeader = new MessageHeader("Origin-Machine-Name")
@@ -36,6 +42,12 @@ object MessageHeader {
   val LENGTH: MessageHeader = new MessageHeader("Length")
 
   private val X_GROWL_RESOURCE = "x-growl-resource://"
+
+  private val DATE_FORMATS = Seq(
+    "yyyy-MM-dd'T'HH:mm:ssZ",
+    "yyyy-MM-dd HH:mm:ss'Z'",
+    "yyyy-MM-dd"
+  )
 }
 
 class MessageHeader(headerName: String) {
@@ -56,7 +68,37 @@ class MessageHeader(headerName: String) {
       messageBuilder.resources.put(r.resourceId, r.imageData)
   }
 
-  def sanitize(value: String): String = value.replaceAll(Message.LINE_BREAK, "\n")
+  private def getRequiredValue(gntpMessageHeader: MessageHeader)(implicit headers: Map[String, String]): String = {
+    headers.getOrElse(gntpMessageHeader.toString, throw new RuntimeException(s"Required header ${gntpMessageHeader.toString} not found"))
+  }
+
+  private def parseTimestamp(timestampText: String, dateFormats: Seq[String]): Date = {
+    dateFormats match {
+      case format :: tail =>
+        Try(new SimpleDateFormat(format).parse(timestampText)) match {
+          case Failure(e)         => parseTimestamp(timestampText, tail)
+          case Success(timestamp) => timestamp
+        }
+      case Nil =>
+        throw new RuntimeException("Timestamp Bad Format")
+    }
+  }
+
+  def getMessageType(implicit headers: Map[String, String]): MessageType = Try(MessageType.withName(getRequiredValue(this))).getOrElse(MessageType.ERROR)
+
+  def getOptionalLong(implicit headers: Map[String, String]): Option[Long] = headers.get(this.toString).map(_.toLong)
+
+  def getOptionalString(implicit headers: Map[String, String]): Option[String] = headers.get(this.toString)
+
+  def getErrorCode(implicit headers: Map[String, String]): Option[ErrorStatus.Value] = headers.get(this.toString).map { errorCode => ErrorStatus(errorCode.toInt) }
+
+  def getRequiredString(implicit headers: Map[String, String]): String = getRequiredValue(this)
+
+  def getCallbackResult(implicit headers: Map[String, String]): CallbackResult.Value = CallbackResult.withName(getRequiredValue(this))
+
+  def getDate(implicit headers: Map[String, String]): Date = parseTimestamp(getRequiredValue(this), MessageHeader.DATE_FORMATS)
+
+  private def sanitize(value: String): String = value.replaceAll(Message.LINE_BREAK, "\n")
 
   override def toString: String = headerName
 }
