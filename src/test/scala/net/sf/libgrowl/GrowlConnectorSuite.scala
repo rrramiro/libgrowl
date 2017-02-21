@@ -16,7 +16,7 @@ class GrowlConnectorSuite extends FunSuite {
   val PING_ICON: String = APPLICATION_ICON
 
   test("notification"){
-    val growl = new GrowlConnector("localhost", encryption = Encryption.NONE)(global)
+    val growl = new GrowlConnector("localhost", encryption = Encryption("password", EncryptionAlgorithm.AES))(global)
 
     val application = Application("Application name", getImage(APPLICATION_ICON))
     val notificationType1 = NotificationType("NT1", "Notification type 1", getImage(RING_ICON))

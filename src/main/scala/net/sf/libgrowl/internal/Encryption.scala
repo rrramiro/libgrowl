@@ -11,7 +11,7 @@ object Encryption {
 
   val DEFAULT_RANDOM_SALT_ALGORITHM: String = "SHA1PRNG"
   val DEFAULT_SALT_SIZE: Int = 16
-  val DEFAULT_TRANSFORMATION: String = "ECB/PKCS5Padding"
+  val DEFAULT_TRANSFORMATION: String = "CBC/PKCS5Padding"
   val NONE_ENCRYPTION_ALGORITHM: String = "NONE"
   val BINARY_HASH_FUNCTION: String = "MD5"
 
@@ -63,19 +63,21 @@ object Encryption {
     val passphraseBytes = passphrase.getBytes(Message.ENCODING)
     val keyBasis = passphraseBytes ++ salt
     val key: Array[Byte] = hash(keyBasis)
-    val secretKey: SecretKey = getSecretKey(algorithm, key)
-    val iv: IvParameterSpec = new IvParameterSpec(secretKey.getEncoded)
+    val (secretKey, iv) = getSecretKeyAndIv(algorithm, key)
     val cipher: Cipher = Cipher.getInstance(s"$algorithm/${Encryption.DEFAULT_TRANSFORMATION}")
     new Encryption(salt, hash(key), secretKey, cipher, iv, algorithm, keyHashAlgorithm)
   }
 
-  private def getSecretKey(algorithm: EncryptionAlgorithm.Value, key: Array[Byte]) = algorithm match {
+  private def getSecretKeyAndIv(algorithm: EncryptionAlgorithm.Value, key: Array[Byte]): (SecretKey, IvParameterSpec) = algorithm match {
     case EncryptionAlgorithm.DES =>
-      SecretKeyFactory.getInstance(algorithm.toString).generateSecret(new DESKeySpec(key))
+      val secretKey = SecretKeyFactory.getInstance(algorithm.toString).generateSecret(new DESKeySpec(key))
+      secretKey -> new IvParameterSpec(secretKey.getEncoded)
     case EncryptionAlgorithm.DESede =>
-      SecretKeyFactory.getInstance(algorithm.toString).generateSecret(new DESedeKeySpec(key))
+      val secretKey = SecretKeyFactory.getInstance(algorithm.toString).generateSecret(new DESedeKeySpec(key))
+      secretKey -> new IvParameterSpec(secretKey.getEncoded, 0, 8)
     case EncryptionAlgorithm.AES =>
-      new SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(new PBEKeySpec(null, key, 65536, 128)).getEncoded, "AES")
+      val secretKey = new SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(new PBEKeySpec(null, key, 65536, 128)).getEncoded, "AES")
+      secretKey -> new IvParameterSpec(secretKey.getEncoded)
   }
 
   private def hashWithAlgorithm(keyHashAlgorithm: HashAlgorithm.Value)(keyToUse: Array[Byte]): Array[Byte] = {
