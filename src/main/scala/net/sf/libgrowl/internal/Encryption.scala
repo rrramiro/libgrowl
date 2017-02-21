@@ -76,7 +76,7 @@ object Encryption {
       val secretKey = SecretKeyFactory.getInstance(algorithm.toString).generateSecret(new DESedeKeySpec(key))
       secretKey -> new IvParameterSpec(secretKey.getEncoded, 0, 8)
     case EncryptionAlgorithm.AES =>
-      val secretKey = new SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(new PBEKeySpec(null, key, 65536, 128)).getEncoded, "AES")
+      val secretKey = new SecretKeySpec(key, 0, 16, "AES")
       secretKey -> new IvParameterSpec(secretKey.getEncoded)
   }
 
@@ -94,9 +94,9 @@ class Encryption(
   algorithm: EncryptionAlgorithm.Value,
   keyHashAlgorithm: HashAlgorithm.Value
 ) extends EncryptionType {
+  cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv)
 
   override def apply(in: Array[Byte]): Array[Byte] = {
-    cipher.init(Cipher.ENCRYPT_MODE, secretKey)
     cipher.doFinal(in)
   }
 
