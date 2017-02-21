@@ -75,22 +75,23 @@ object Message {
   def send(socket: Socket, messageBytes: Array[Byte])(implicit ec: ExecutionContext): (GntpMessageResponse, Option[Future[GntpMessageResponse]]) = {
     val in = socket.getInputStream
     val out = socket.getOutputStream
+    val scanner: Scanner = new java.util.Scanner(in).useDelimiter(Message.LINE_BREAK * 2)
+    out.write(messageBytes)
+    out.flush()
+    val responseMessage = if (scanner.hasNext) {
+      val msg = scanner.next()
+      println("Xx" * 20)
+      println(msg)
+      println("Xx" * 20)
+      parse(msg)
+    } else {
+      GntpErrorMessage(None, MessageType.ERROR, None, "No repsonse.")
+    }
 
     def closeAll() = {
       out.close()
       in.close()
       socket.close()
-    }
-
-    out.write(messageBytes)
-    out.flush()
-    val scanner: Scanner = new java.util.Scanner(in).useDelimiter(Message.LINE_BREAK * 2)
-
-    val responseMessage = if (scanner.hasNext) {
-      val msg = scanner.next()
-      parse(msg)
-    } else {
-      GntpErrorMessage(None, MessageType.ERROR, None, "No repsonse.")
     }
 
     val callbackFuture = if (scanner.hasNext) {
@@ -114,7 +115,7 @@ object Message {
     ORIGIN_PLATFORM_VERSION(Message.PLATFORM_VERSION)
   }
 
-  def registerMessage(application: Application, notificationTypes: Seq[NotificationType], encryption: EncryptionType) = {
+  def registerMessage(application: Application, notificationTypes: Seq[NotificationType], encryption: EncryptionType): Array[Byte] = {
     implicit val messageBuilder = new MessageBuilder
     baseMessage
     APPLICATION_NAME(application.name)
@@ -130,7 +131,7 @@ object Message {
     messageBuilder.buildMessage(MessageType.REGISTER, encryption)
   }
 
-  def notifyMessage(notification: Notification, encryption: EncryptionType) = {
+  def notifyMessage(notification: Notification, encryption: EncryptionType): Array[Byte] = {
     implicit val messageBuilder = new MessageBuilder
     baseMessage
     APPLICATION_NAME(notification.application.name)
@@ -143,8 +144,8 @@ object Message {
     notification.icon.foreach { NOTIFICATION_ICON(_) }
     notification.coalescingId.foreach { NOTIFICATION_COALESCING_ID(_) }
 
-    NOTIFICATION_CALLBACK_CONTEXT("Hello")
-    NOTIFICATION_CALLBACK_CONTEXT_TYPE("string")
+//    NOTIFICATION_CALLBACK_CONTEXT("Hello")
+//    NOTIFICATION_CALLBACK_CONTEXT_TYPE("string")
 
     //  notification.urlCallback.fold{
     //    notification.id.foreach{
