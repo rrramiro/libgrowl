@@ -59,11 +59,14 @@ object Encryption {
     saltGenerator: => Array[Byte] = Encryption.getSalt()
   ): Encryption = {
     val salt = saltGenerator
+    val hash = hashWithAlgorithm(keyHashAlgorithm) _
     val passphraseBytes = passphrase.getBytes(Message.ENCODING)
     val keyBasis = passphraseBytes ++ salt
-    val key: Array[Byte] = hash(keyHashAlgorithm, keyBasis)
+    val key: Array[Byte] = hash(keyBasis)
     val secretKey: SecretKey = getSecretKey(algorithm, key)
-    new Encryption(salt, hash(keyHashAlgorithm, key), secretKey,  algorithm, keyHashAlgorithm)
+    val iv: IvParameterSpec = new IvParameterSpec(secretKey.getEncoded)
+    val cipher: Cipher = Cipher.getInstance(s"$algorithm/${Encryption.DEFAULT_TRANSFORMATION}")
+    new Encryption(salt, hash(key), secretKey, cipher, iv, algorithm, keyHashAlgorithm)
   }
 
   private def getSecretKey(algorithm: EncryptionAlgorithm.Value, key: Array[Byte]) = algorithm match {
@@ -75,7 +78,7 @@ object Encryption {
       new SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(new PBEKeySpec(null, key, 65536, 128)).getEncoded, "AES")
   }
 
-  private def hash(keyHashAlgorithm: HashAlgorithm.Value, keyToUse: Array[Byte]): Array[Byte] = {
+  private def hashWithAlgorithm(keyHashAlgorithm: HashAlgorithm.Value)(keyToUse: Array[Byte]): Array[Byte] = {
     MessageDigest.getInstance(keyHashAlgorithm.toString).digest(keyToUse)
   }
 }
@@ -84,20 +87,18 @@ class Encryption(
   salt: Array[Byte],
   keyHashed: Array[Byte],
   secretKey: SecretKey,
+  cipher: Cipher,
+  iv: IvParameterSpec,
   algorithm: EncryptionAlgorithm.Value,
   keyHashAlgorithm: HashAlgorithm.Value
 ) extends EncryptionType {
 
-  private val (cipher, ivArray) = {
-    val _cipher = Cipher.getInstance(s"$algorithm/${Encryption.DEFAULT_TRANSFORMATION}")
-    _cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-    assert(_cipher.getIV != null)
-    _cipher -> _cipher.getIV
+  override def apply(in: Array[Byte]): Array[Byte] = {
+    cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+    cipher.doFinal(in)
   }
 
-  override def apply(in: Array[Byte]): Array[Byte] = cipher.doFinal(in)
-
   override def toString: String = {
-    s"${algorithm.code}:${Encryption.toHexadecimal(ivArray)} ${keyHashAlgorithm.toString.replaceAll("-", "")}:${Encryption.toHexadecimal(keyHashed)}.${Encryption.toHexadecimal(salt)}"
+    s"${algorithm.code}:${Encryption.toHexadecimal(iv.getIV)} ${keyHashAlgorithm.toString.replaceAll("-", "")}:${Encryption.toHexadecimal(keyHashed)}.${Encryption.toHexadecimal(salt)}"
   }
 }
