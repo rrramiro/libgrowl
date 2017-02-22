@@ -7,37 +7,37 @@ import net.sf.libgrowl.ErrorStatus
 import net.sf.libgrowl.MessageType
 import net.sf.libgrowl.MessageType.MessageType
 
-trait GntpMessageResponse {
+trait MessageResponse {
   def messageType: MessageType
   def respondingType: MessageType
   def internalNotificationId: Option[Long]
 }
 
-case class GntpCallbackMessage(
+case class CallbackMessage(
   internalNotificationId: Option[Long],
   notificationId: Option[String],
   callbackResult: CallbackResult.Value,
   context: String,
   contextType: String,
   timestamp: Date
-) extends GntpMessageResponse {
+) extends MessageResponse {
   val messageType: MessageType = MessageType.CALLBACK
   val respondingType: MessageType = MessageType.NOTIFY
 }
 
-case class GntpOkMessage(
+case class OkMessage(
   internalNotificationId: Option[Long],
   respondingType: MessageType,
   notificationId: Option[String]
-) extends GntpMessageResponse {
+) extends MessageResponse {
   val messageType: MessageType = MessageType.OK
 }
 
-case class GntpErrorMessage(
+case class ErrorMessage(
   internalNotificationId: Option[Long],
   respondingType: MessageType,
   status: Option[ErrorStatus.Value],
   description: String
-) extends GntpMessageResponse {
+) extends MessageResponse {
   val messageType: MessageType = MessageType.ERROR
 }
