@@ -2,9 +2,12 @@ package net.sf.libgrowl
 
 import javax.imageio.ImageIO
 
-import net.sf.libgrowl.internal.{Encryption, ResourceIcon}
+import net.sf.libgrowl.internal.{Encryption, MessageResponse, ResourceIcon}
 import org.scalatest.FunSuite
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.Success
 
 class GrowlConnectorSuite extends FunSuite {
   val APPLICATION_ICON: String = "app-icon.png"
@@ -35,15 +38,27 @@ class GrowlConnectorSuite extends FunSuite {
       notificationType6
     ))
     val notification1 = Notification(application, notificationType1, "Notification title 1", Some("Notification text 1"))
-    val r1 = growl.notify(notification1, Some { cb =>
-      println("@@@@@@@@@@@@@@@@@@@@@@@@@@")
-      println(cb)
-      println("@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    })
+    val (r1, c1) = growl.notify(notification1)
+    printCallback(c1)
+
     assert(r1.messageType === MessageType.OK)
 
     val notification2 = Notification(application, notificationType2, "Notification title 2", Some("Notification text 2"), getImage(APPLICATION_ICON))
-    assert(growl.notify(notification2).messageType === MessageType.OK)
+    val (r2, c2) = growl.notify(notification2)
+    printCallback(c2)
+    assert(r2.messageType === MessageType.OK)
+  }
+
+  def printCallback(fcb: Option[Future[MessageResponse]]) = {
+    fcb.foreach{ f =>
+      f.onComplete{
+        case Success(cb) =>
+          println("@@@@@@@@@@@@@@@@@@@@@@@@@@")
+          println(cb)
+          println("@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        case _ =>
+      }
+    }
   }
 
   private def getImage(img: String) = Some(ResourceIcon(ImageIO.read(this.getClass.getClassLoader.getResourceAsStream(img))))

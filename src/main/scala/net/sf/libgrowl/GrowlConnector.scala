@@ -6,7 +6,7 @@ import net.sf.libgrowl.internal.Encryption.EncryptionType
 import net.sf.libgrowl.internal._
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 /**
@@ -87,25 +87,14 @@ class GrowlConnector(val host: String = "localhost", val port: Int = GrowlConnec
    * notification to send to Growl
    * @return response, see { @link IResponse}
    */
-  final def notify(notification: Notification, callbackAction: Option[GntpMessageResponse => Unit] = None): GntpMessageResponse = {
+  final def notify(notification: Notification): (MessageResponse, Option[Future[MessageResponse]]) = {
     if (!isRegistered(notification.notificationType)) {
       System.err.println("You need to register the notification type " + notification.notificationType.displayName + " before using it in notifications.")
     }
     val message = Message.notifyMessage(notification, encryption)
     val socket: Socket = new Socket(host, port)
     socket.setSoTimeout(timeout)
-    val (result, callbackFuture) = Message.send(socket, message)
-    callbackFuture.foreach{ f =>
-      f.onComplete{
-        case Success(callbackMessage) =>
-          callbackAction.foreach{
-            action =>
-              action(callbackMessage)
-          }
-        case _ =>
-      }
-    }
-    result
+    Message.send(socket, message)
   }
 
   private def isRegistered(notificationType: NotificationType) = mRegisteredNotifications.contains(notificationType)
