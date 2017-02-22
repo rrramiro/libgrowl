@@ -1,13 +1,11 @@
-package net.sf.libgrowl
+package fr.ramiro.growl
 
 import java.net.Socket
 
-import net.sf.libgrowl.internal.Encryption.EncryptionType
-import net.sf.libgrowl.internal._
+import fr.ramiro.growl.Encryption.EncryptionType
 
 import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
  * GrowlConnector is the entry point for sending notifications to Growl. Typical
@@ -70,7 +68,7 @@ class GrowlConnector(val host: String = "localhost", val port: Int = GrowlConnec
     val socket: Socket = new Socket(host, port)
     socket.setSoTimeout(timeout)
     val result = Message.send(socket, message)._1.messageType == MessageType.OK
-    if(result){
+    if (result) {
       mRegisteredNotifications ++= notificationTypes
     }
     result

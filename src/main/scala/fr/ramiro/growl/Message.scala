@@ -1,17 +1,13 @@
-package net.sf.libgrowl.internal
+package fr.ramiro.growl
 
-import java.net.InetAddress
-import java.net.Socket
-import java.nio.charset.{Charset, StandardCharsets}
+import java.net.{ InetAddress, Socket }
+import java.nio.charset.{ Charset, StandardCharsets }
 import java.util.Scanner
 
-import net.sf.libgrowl.MessageType.MessageType
-import net.sf.libgrowl.{Application, MessageType, Notification, NotificationType}
-import net.sf.libgrowl.internal.Encryption.EncryptionType
-import net.sf.libgrowl.internal.MessageHeader.{APPLICATION_ICON, APPLICATION_NAME, NOTIFICATION_COALESCING_ID, NOTIFICATION_COUNT, NOTIFICATION_DISPLAY_NAME, NOTIFICATION_ENABLED, NOTIFICATION_ICON, NOTIFICATION_ID, NOTIFICATION_INTERNAL_ID, NOTIFICATION_NAME, NOTIFICATION_PRIORITY, NOTIFICATION_STICKY, NOTIFICATION_TEXT, NOTIFICATION_TITLE, _}
+import Encryption.EncryptionType
+import MessageHeader.{ APPLICATION_ICON, APPLICATION_NAME, NOTIFICATION_COALESCING_ID, NOTIFICATION_COUNT, NOTIFICATION_DISPLAY_NAME, NOTIFICATION_ENABLED, NOTIFICATION_ICON, NOTIFICATION_ID, NOTIFICATION_INTERNAL_ID, NOTIFICATION_NAME, NOTIFICATION_PRIORITY, NOTIFICATION_STICKY, NOTIFICATION_TEXT, NOTIFICATION_TITLE, _ }
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 object Message {
   val SOFTWARE_NAME = "libgrowl"
@@ -32,7 +28,7 @@ object Message {
     assert(statusLine.startsWith(Message.GNTP_VERSION), "Unknown protocol version")
     val statusLineIterable: Array[String] = statusLine.split(' ')
     val messageTypeText: String = statusLineIterable(1).stripPrefix("-")
-    val messageType: MessageType = MessageType.withName(messageTypeText)
+    val messageType: MessageType.Value = MessageType.withName(messageTypeText)
     val headersMap = new collection.mutable.HashMap[String, String]
     while (iter.hasNext) {
       val line = iter.next()
@@ -80,9 +76,6 @@ object Message {
     out.flush()
     val responseMessage = if (scanner.hasNext) {
       val msg = scanner.next()
-      println("Xx" * 20)
-      println(msg)
-      println("Xx" * 20)
       parse(msg)
     } else {
       ErrorMessage(None, MessageType.ERROR, None, "No repsonse.")
@@ -143,13 +136,13 @@ object Message {
     NOTIFICATION_PRIORITY(notification.priority)
     notification.icon.foreach { NOTIFICATION_ICON(_) }
     notification.coalescingId.foreach { NOTIFICATION_COALESCING_ID(_) }
-    notification.urlCallback.fold{
-      notification.id.foreach{
+    notification.urlCallback.fold {
+      notification.id.foreach {
         id =>
           NOTIFICATION_CALLBACK_CONTEXT(id)
           NOTIFICATION_CALLBACK_CONTEXT_TYPE("int")
       }
-    }{
+    } {
       NOTIFICATION_CALLBACK_TARGET(_)
     }
     notification.id.foreach { NOTIFICATION_INTERNAL_ID(_) }
