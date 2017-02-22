@@ -1,7 +1,5 @@
 package net.sf.libgrowl
 
-import javax.imageio.ImageIO
-
 import net.sf.libgrowl.internal.{Encryption, MessageResponse, ResourceIcon}
 import org.scalatest.FunSuite
 
@@ -61,6 +59,6 @@ class GrowlConnectorSuite extends FunSuite {
     }
   }
 
-  private def getImage(img: String) = Some(ResourceIcon(ImageIO.read(this.getClass.getClassLoader.getResourceAsStream(img))))
+  private def getImage(img: String) = Some(ResourceIcon(this.getClass.getClassLoader.getResourceAsStream(img)))
 }
 

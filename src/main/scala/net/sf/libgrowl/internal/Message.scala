@@ -143,19 +143,15 @@ object Message {
     NOTIFICATION_PRIORITY(notification.priority)
     notification.icon.foreach { NOTIFICATION_ICON(_) }
     notification.coalescingId.foreach { NOTIFICATION_COALESCING_ID(_) }
-
-//    NOTIFICATION_CALLBACK_CONTEXT("Hello")
-//    NOTIFICATION_CALLBACK_CONTEXT_TYPE("string")
-
-    //  notification.urlCallback.fold{
-    //    notification.id.foreach{
-    //      id =>
-    //        NOTIFICATION_CALLBACK_CONTEXT(id)
-    //        NOTIFICATION_CALLBACK_CONTEXT_TYPE("int")
-    //    }
-    //  }{
-    //    NOTIFICATION_CALLBACK_TARGET(_)
-    //  }
+    notification.urlCallback.fold{
+      notification.id.foreach{
+        id =>
+          NOTIFICATION_CALLBACK_CONTEXT(id)
+          NOTIFICATION_CALLBACK_CONTEXT_TYPE("int")
+      }
+    }{
+      NOTIFICATION_CALLBACK_TARGET(_)
+    }
     notification.id.foreach { NOTIFICATION_INTERNAL_ID(_) }
     messageBuilder.buildMessage(MessageType.NOTIFY, encryption)
   }
