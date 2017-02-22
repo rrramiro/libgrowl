@@ -24,7 +24,7 @@ object Message {
 
   val ENCODING: Charset = StandardCharsets.UTF_8
 
-  def parse(s: String): GntpMessageResponse = {
+  def parse(s: String): MessageResponse = {
     val split: Array[String] = s.split(Message.LINE_BREAK)
     assert(split.nonEmpty, "Empty message received from Growl")
     val iter: Iterator[String] = split.iterator
@@ -46,13 +46,13 @@ object Message {
 
     messageType match {
       case MessageType.OK =>
-        GntpOkMessage(
+        OkMessage(
           NOTIFICATION_INTERNAL_ID.getOptionalLong,
           RESPONSE_ACTION.getMessageType,
           NOTIFICATION_ID.getOptionalString
         )
       case MessageType.CALLBACK =>
-        GntpCallbackMessage(
+        CallbackMessage(
           NOTIFICATION_INTERNAL_ID.getOptionalLong,
           NOTIFICATION_ID.getOptionalString,
           NOTIFICATION_CALLBACK_RESULT.getCallbackResult,
@@ -61,7 +61,7 @@ object Message {
           NOTIFICATION_CALLBACK_TIMESTAMP.getDate
         )
       case MessageType.ERROR =>
-        GntpErrorMessage(
+        ErrorMessage(
           NOTIFICATION_INTERNAL_ID.getOptionalLong,
           RESPONSE_ACTION.getMessageType,
           ERROR_CODE.getErrorCode,
@@ -72,7 +72,7 @@ object Message {
     }
   }
 
-  def send(socket: Socket, messageBytes: Array[Byte])(implicit ec: ExecutionContext): (GntpMessageResponse, Option[Future[GntpMessageResponse]]) = {
+  def send(socket: Socket, messageBytes: Array[Byte])(implicit ec: ExecutionContext): (MessageResponse, Option[Future[MessageResponse]]) = {
     val in = socket.getInputStream
     val out = socket.getOutputStream
     val scanner: Scanner = new java.util.Scanner(in).useDelimiter(Message.LINE_BREAK * 2)
@@ -85,7 +85,7 @@ object Message {
       println("Xx" * 20)
       parse(msg)
     } else {
-      GntpErrorMessage(None, MessageType.ERROR, None, "No repsonse.")
+      ErrorMessage(None, MessageType.ERROR, None, "No repsonse.")
     }
 
     def closeAll() = {
