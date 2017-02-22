@@ -1,12 +1,9 @@
-package net.sf.libgrowl.internal
+package fr.ramiro.growl
 
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import net.sf.libgrowl.MessageType.MessageType
-import net.sf.libgrowl.{CallbackResult, ErrorStatus, MessageType, Priority}
-
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 object MessageHeader {
   val ORIGIN_MACHINE_NAME: MessageHeader = new MessageHeader("Origin-Machine-Name")
@@ -76,7 +73,7 @@ class MessageHeader(headerName: String) {
     dateFormats match {
       case format :: tail =>
         Try(new SimpleDateFormat(format).parse(timestampText)) match {
-          case Failure(e)         => parseTimestamp(timestampText, tail)
+          case Failure(e) => parseTimestamp(timestampText, tail)
           case Success(timestamp) => timestamp
         }
       case Nil =>
@@ -84,7 +81,7 @@ class MessageHeader(headerName: String) {
     }
   }
 
-  def getMessageType(implicit headers: Map[String, String]): MessageType = Try(MessageType.withName(getRequiredValue(this))).getOrElse(MessageType.ERROR)
+  def getMessageType(implicit headers: Map[String, String]): MessageType.Value = Try(MessageType.withName(getRequiredValue(this))).getOrElse(MessageType.ERROR)
 
   def getOptionalLong(implicit headers: Map[String, String]): Option[Long] = headers.get(this.toString).map(_.toLong)
 

@@ -1,11 +1,8 @@
-package net.sf.libgrowl.internal
+package fr.ramiro.growl
 
-import java.security.{MessageDigest, SecureRandom}
-import javax.crypto.{Cipher, SecretKey, SecretKeyFactory}
+import java.security.{ MessageDigest, SecureRandom }
 import javax.crypto.spec._
-
-import net.sf.libgrowl.{EncryptionAlgorithm, HashAlgorithm}
-import net.sf.libgrowl.internal.Encryption.EncryptionType
+import javax.crypto.{ Cipher, SecretKey, SecretKeyFactory }
 
 object Encryption {
 
@@ -86,14 +83,14 @@ object Encryption {
 }
 
 class Encryption(
-  salt: Array[Byte],
-  keyHashed: Array[Byte],
-  secretKey: SecretKey,
-  cipher: Cipher,
-  iv: IvParameterSpec,
-  algorithm: EncryptionAlgorithm.Value,
-  keyHashAlgorithm: HashAlgorithm.Value
-) extends EncryptionType {
+    salt: Array[Byte],
+    keyHashed: Array[Byte],
+    secretKey: SecretKey,
+    cipher: Cipher,
+    iv: IvParameterSpec,
+    algorithm: EncryptionAlgorithm.Value,
+    keyHashAlgorithm: HashAlgorithm.Value
+) extends Encryption.EncryptionType {
   cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv)
 
   override def apply(in: Array[Byte]): Array[Byte] = {

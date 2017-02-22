@@ -1,6 +1,5 @@
-package net.sf.libgrowl
+package fr.ramiro.growl
 
-import net.sf.libgrowl.internal.{Encryption, MessageResponse, ResourceIcon}
 import org.scalatest.FunSuite
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,8 +15,8 @@ class GrowlConnectorSuite extends FunSuite {
   val VOICEMAIL_ICON: String = "voicemail.png"
   val PING_ICON: String = APPLICATION_ICON
 
-  test("notification"){
-    val growl = new GrowlConnector("localhost", encryption = Encryption("password", EncryptionAlgorithm.AES))(global)
+  test("notification") {
+    val growl = new GrowlConnector("localhost", encryption = Encryption("password", EncryptionAlgorithm.DES))(global)
 
     val application = Application("Application name", getImage(APPLICATION_ICON))
     val notificationType1 = NotificationType("NT1", "Notification type 1", getImage(RING_ICON))
@@ -47,9 +46,9 @@ class GrowlConnectorSuite extends FunSuite {
     assert(r2.messageType === MessageType.OK)
   }
 
-  def printCallback(fcb: Option[Future[MessageResponse]]) = {
-    fcb.foreach{ f =>
-      f.onComplete{
+  private def printCallback(fcb: Option[Future[MessageResponse]]) = {
+    fcb.foreach { f =>
+      f.onComplete {
         case Success(cb) =>
           println("@@@@@@@@@@@@@@@@@@@@@@@@@@")
           println(cb)

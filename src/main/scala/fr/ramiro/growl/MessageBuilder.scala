@@ -1,10 +1,8 @@
-package net.sf.libgrowl.internal
+package fr.ramiro.growl
 
 import java.io.ByteArrayOutputStream
 
-import net.sf.libgrowl.MessageType.MessageType
-import net.sf.libgrowl.internal.Encryption.EncryptionType
-import net.sf.libgrowl.internal.MessageHeader.{IDENTIFIER, LENGTH}
+import fr.ramiro.growl.MessageHeader.{ IDENTIFIER, LENGTH }
 
 import scala.collection.mutable
 
@@ -12,7 +10,7 @@ class MessageBuilder {
   val buffer: StringBuilder = new StringBuilder
   val resources: mutable.HashMap[String, Array[Byte]] = mutable.HashMap[String, Array[Byte]]()
 
-  def buildMessage(messageType: MessageType, encryption: EncryptionType): Array[Byte] = {
+  def buildMessage(messageType: MessageType.Value, encryption: Encryption.EncryptionType): Array[Byte] = {
     val out = new ByteArrayOutputStream()
     val headers = buffer.toString().trim
     buffer.clear()

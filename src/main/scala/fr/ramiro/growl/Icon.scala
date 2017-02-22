@@ -1,7 +1,7 @@
-package net.sf.libgrowl.internal
+package fr.ramiro.growl
 
 import java.awt.image.BufferedImage
-import java.io.{ByteArrayOutputStream, File, InputStream}
+import java.io.{ ByteArrayOutputStream, File, InputStream }
 import javax.imageio.ImageIO
 import javax.swing.ImageIcon
 
