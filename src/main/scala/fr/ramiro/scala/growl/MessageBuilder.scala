@@ -1,8 +1,8 @@
-package fr.ramiro.growl
+package fr.ramiro.scala.growl
 
 import java.io.ByteArrayOutputStream
 
-import fr.ramiro.growl.MessageHeader.{ IDENTIFIER, LENGTH }
+import fr.ramiro.scala.growl.MessageHeader.{ IDENTIFIER, LENGTH }
 
 import scala.collection.mutable
 

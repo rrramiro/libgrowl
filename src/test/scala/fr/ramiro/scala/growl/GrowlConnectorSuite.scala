@@ -1,4 +1,4 @@
-package fr.ramiro.growl
+package fr.ramiro.scala.growl
 
 import org.scalatest.FunSuite
 
