@@ -1,16 +1,16 @@
-package fr.ramiro.growl
+package fr.ramiro.scala.growl
 
 import java.net.{ InetAddress, Socket }
 import java.nio.charset.{ Charset, StandardCharsets }
 import java.util.Scanner
 
 import Encryption.EncryptionType
-import MessageHeader.{ APPLICATION_ICON, APPLICATION_NAME, NOTIFICATION_COALESCING_ID, NOTIFICATION_COUNT, NOTIFICATION_DISPLAY_NAME, NOTIFICATION_ENABLED, NOTIFICATION_ICON, NOTIFICATION_ID, NOTIFICATION_INTERNAL_ID, NOTIFICATION_NAME, NOTIFICATION_PRIORITY, NOTIFICATION_STICKY, NOTIFICATION_TEXT, NOTIFICATION_TITLE, _ }
+import MessageHeader._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 object Message {
-  val SOFTWARE_NAME = "libgrowl"
+  val SOFTWARE_NAME = "scala-growl"
   val SOFTWARE_VERSION = "0.1"
   val GNTP_VERSION = "GNTP/1.0"
   val LINE_BREAK = "\r\n"

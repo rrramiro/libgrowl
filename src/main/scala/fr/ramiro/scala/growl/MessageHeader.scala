@@ -1,4 +1,4 @@
-package fr.ramiro.growl
+package fr.ramiro.scala.growl
 
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -87,7 +87,9 @@ class MessageHeader(headerName: String) {
 
   def getOptionalString(implicit headers: Map[String, String]): Option[String] = headers.get(this.toString)
 
-  def getErrorCode(implicit headers: Map[String, String]): Option[ErrorStatus.Value] = headers.get(this.toString).map { errorCode => ErrorStatus(errorCode.toInt) }
+  def getErrorCode(implicit headers: Map[String, String]): Option[ErrorStatus.Value] = {
+    headers.get(this.toString).map { errorCode => ErrorStatus(errorCode.toInt) }
+  }
 
   def getRequiredString(implicit headers: Map[String, String]): String = getRequiredValue(this)
 
