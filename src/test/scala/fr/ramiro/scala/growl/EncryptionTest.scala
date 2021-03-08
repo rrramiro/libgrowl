@@ -2,9 +2,9 @@ package fr.ramiro.scala.growl
 
 import java.nio.charset.StandardCharsets
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class EncryptionTest extends FunSuite {
+class EncryptionTest extends AnyFunSuite {
   private val saltGenerator: Array[Byte] = ">>>>>>>>".getBytes(Message.ENCODING) //3E3E3E3E3E3E3E3E
   private val message = "text".getBytes(StandardCharsets.UTF_8)
 

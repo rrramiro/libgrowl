@@ -1,12 +1,12 @@
 package fr.ramiro.scala.growl
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Success
 
-class GrowlConnectorSuite extends FunSuite {
+class GrowlConnectorSuite extends AnyFunSuite {
   val APPLICATION_ICON: String = "app-icon.png"
   val RING_ICON: String = "ring.png"
   val SMS_ICON: String = "sms.png"
@@ -32,8 +32,7 @@ class GrowlConnectorSuite extends FunSuite {
       notificationType3,
       notificationType4,
       notificationType5,
-      notificationType6
-    ))
+      notificationType6))
     val notification1 = Notification(application, notificationType1, "Notification title 1", Some("Notification text 1"))
     val (r1, c1) = growl.notify(notification1)
     printCallback(c1)
