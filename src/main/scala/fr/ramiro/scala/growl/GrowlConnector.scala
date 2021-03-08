@@ -9,11 +9,10 @@ import scala.collection.mutable
 import scala.concurrent.{ ExecutionContext, Future }
 
 class GrowlConnector(
-    host: String = "localhost",
-    port: Int = GrowlConnector.DEFAULT_GROWL_PORT,
-    timeout: Int = GrowlConnector.DEFAULT_TIMEOUT,
-    encryption: EncryptionType = Encryption.NONE
-)(implicit ec: ExecutionContext) {
+  host: String = "localhost",
+  port: Int = GrowlConnector.DEFAULT_GROWL_PORT,
+  timeout: Int = GrowlConnector.DEFAULT_TIMEOUT,
+  encryption: EncryptionType = Encryption.NONE)(implicit ec: ExecutionContext) {
   private val logger = LoggerFactory.getLogger(this.getClass)
   private val mRegisteredNotifications = mutable.HashSet[NotificationType]()
 

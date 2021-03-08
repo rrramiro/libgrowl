@@ -45,8 +45,7 @@ object Message {
         OkMessage(
           NOTIFICATION_INTERNAL_ID.getOptionalLong,
           RESPONSE_ACTION.getMessageType,
-          NOTIFICATION_ID.getOptionalString
-        )
+          NOTIFICATION_ID.getOptionalString)
       case MessageType.CALLBACK =>
         CallbackMessage(
           NOTIFICATION_INTERNAL_ID.getOptionalLong,
@@ -54,15 +53,13 @@ object Message {
           NOTIFICATION_CALLBACK_RESULT.getCallbackResult,
           NOTIFICATION_CALLBACK_CONTEXT.getRequiredString,
           NOTIFICATION_CALLBACK_CONTEXT_TYPE.getRequiredString,
-          NOTIFICATION_CALLBACK_TIMESTAMP.getDate
-        )
+          NOTIFICATION_CALLBACK_TIMESTAMP.getDate)
       case MessageType.ERROR =>
         ErrorMessage(
           NOTIFICATION_INTERNAL_ID.getOptionalLong,
           RESPONSE_ACTION.getMessageType,
           ERROR_CODE.getErrorCode,
-          ERROR_DESCRIPTION.getRequiredString
-        )
+          ERROR_DESCRIPTION.getRequiredString)
       case _ =>
         throw new IllegalStateException("Unknown response message type: " + messageType)
     }

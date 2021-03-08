@@ -43,8 +43,7 @@ object MessageHeader {
   private val DATE_FORMATS = Seq(
     "yyyy-MM-dd'T'HH:mm:ssZ",
     "yyyy-MM-dd HH:mm:ss'Z'",
-    "yyyy-MM-dd"
-  )
+    "yyyy-MM-dd")
 }
 
 class MessageHeader(headerName: String) {

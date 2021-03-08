@@ -81,8 +81,7 @@ package object growl {
     sticky: Boolean = false,
     urlCallback: Option[String] = None,
     coalescingId: Option[String] = None,
-    id: Option[String] = None
-  )
+    id: Option[String] = None)
 
   case class NotificationType(notificationTypeId: String, displayName: String, icon: Option[Icon] = None, enabled: Boolean = true)
 
@@ -93,31 +92,28 @@ package object growl {
   }
 
   case class CallbackMessage(
-      internalNotificationId: Option[Long],
-      notificationId: Option[String],
-      callbackResult: CallbackResult.Value,
-      context: String,
-      contextType: String,
-      timestamp: Date
-  ) extends MessageResponse {
+    internalNotificationId: Option[Long],
+    notificationId: Option[String],
+    callbackResult: CallbackResult.Value,
+    context: String,
+    contextType: String,
+    timestamp: Date) extends MessageResponse {
     val messageType: MessageType.Value = MessageType.CALLBACK
     val respondingType: MessageType.Value = MessageType.NOTIFY
   }
 
   case class OkMessage(
-      internalNotificationId: Option[Long],
-      respondingType: MessageType.Value,
-      notificationId: Option[String]
-  ) extends MessageResponse {
+    internalNotificationId: Option[Long],
+    respondingType: MessageType.Value,
+    notificationId: Option[String]) extends MessageResponse {
     val messageType: MessageType.Value = MessageType.OK
   }
 
   case class ErrorMessage(
-      internalNotificationId: Option[Long],
-      respondingType: MessageType.Value,
-      status: Option[ErrorStatus.Value],
-      description: String
-  ) extends MessageResponse {
+    internalNotificationId: Option[Long],
+    respondingType: MessageType.Value,
+    status: Option[ErrorStatus.Value],
+    description: String) extends MessageResponse {
     val messageType: MessageType.Value = MessageType.ERROR
   }
 

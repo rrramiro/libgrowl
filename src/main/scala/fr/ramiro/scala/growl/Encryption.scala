@@ -38,8 +38,7 @@ object Encryption {
   def getSalt(
     randomSaltAlgorithm: String = DEFAULT_RANDOM_SALT_ALGORITHM,
     saltSize: Int = DEFAULT_SALT_SIZE,
-    seedGenerator: => Long = System.currentTimeMillis()
-  ): Array[Byte] = {
+    seedGenerator: => Long = System.currentTimeMillis()): Array[Byte] = {
     val random = SecureRandom.getInstance(randomSaltAlgorithm)
     random.setSeed(seedGenerator)
     val saltArray: Array[Byte] = new Array[Byte](saltSize)
@@ -51,8 +50,7 @@ object Encryption {
     passphrase: String,
     algorithm: EncryptionAlgorithm.Value = EncryptionAlgorithm.DES,
     keyHashAlgorithm: HashAlgorithm.Value = HashAlgorithm.SHA512,
-    saltGenerator: => Array[Byte] = Encryption.getSalt()
-  ): EncryptionType = {
+    saltGenerator: => Array[Byte] = Encryption.getSalt()): EncryptionType = {
     val salt = saltGenerator
     val hash = hashWithAlgorithm(keyHashAlgorithm) _
     val passphraseBytes = passphrase.getBytes(Message.ENCODING)

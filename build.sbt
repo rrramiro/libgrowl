@@ -3,12 +3,12 @@ name := "scala-growl"
 
 organization := "fr.ramiro"
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.13.5"
 
 libraryDependencies ++= Seq(
-  "org.slf4j" % "slf4j-api" % "1.7.23",
-  "org.slf4j" % "slf4j-nop" % "1.7.23" % Test,
-  "org.scalatest" %% "scalatest" % "3.0.0" % Test
+  "org.slf4j" % "slf4j-api" % "1.7.30",
+  "org.slf4j" % "slf4j-nop" % "1.7.30" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.6" % Test
 )
 
 (compile in Compile) := ((compile in Compile) dependsOn (scalastyle in Compile).toTask("")).value
@@ -23,9 +23,11 @@ releaseProcess := Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
-  releaseStepTask(PgpKeys.publishSigned),
+  releaseStepTask(PgpKeys.publishSigned), //releaseStepCommand("publishSigned"),
   setNextVersion,
   commitNextVersion,
-  releaseStepCommand(xerial.sbt.Sonatype.SonatypeCommand.sonatypeReleaseAll),
+  releaseStepCommand("sonatypeReleaseAll"),
   pushChanges
 )
+
+Global / onChangedBuildSource := ReloadOnSourceChanges
