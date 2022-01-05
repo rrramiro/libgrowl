@@ -7,7 +7,8 @@ scalaVersion := "2.13.5"
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.30",
-  "org.slf4j" % "slf4j-nop" % "1.7.30" % Test,
+  //"org.slf4j" % "slf4j-nop" % "1.7.30" % Test,
+  "ch.qos.logback" % "logback-classic" % "1.2.3" % Test,
   "org.scalatest" %% "scalatest" % "3.2.6" % Test
 )
 

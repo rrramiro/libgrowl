@@ -20,7 +20,11 @@ class GrowlConnector(
     val message = Message.registerMessage(application, notificationTypes, encryption)
     val socket: Socket = new Socket(host, port)
     socket.setSoTimeout(timeout)
-    val result = Message.send(socket, message)._1.messageType == MessageType.OK
+
+    //logger.debug(s"request:\n${new String(message)}")
+    val (resp, _) = Message.send(socket, message)
+    logger.debug(s"resonse: ${resp}")
+    val result = resp.messageType == MessageType.OK
     if (result) {
       mRegisteredNotifications ++= notificationTypes
     }

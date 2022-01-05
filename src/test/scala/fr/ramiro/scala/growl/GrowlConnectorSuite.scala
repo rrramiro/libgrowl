@@ -57,6 +57,6 @@ class GrowlConnectorSuite extends AnyFunSuite {
     }
   }
 
-  private def getImage(img: String) = Some(ResourceIcon(this.getClass.getClassLoader.getResourceAsStream(img)))
+  private def getImage(img: String) = None //Some(ResourceIcon(this.getClass.getClassLoader.getResourceAsStream(img)))
 }
 

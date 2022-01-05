@@ -8,6 +8,7 @@ import Encryption.EncryptionType
 import MessageHeader._
 
 import scala.concurrent.{ ExecutionContext, Future }
+import org.slf4j.LoggerFactory
 
 object Message {
   val SOFTWARE_NAME = "scala-growl"
@@ -17,7 +18,7 @@ object Message {
   private val MACHINE_NAME: String = InetAddress.getLocalHost.getHostName
   private val PLATFORM_VERSION = System.getProperty("os.version")
   private val PLATFORM_NAME = System.getProperty("os.name")
-
+  private val logger = LoggerFactory.getLogger("Message")
   val ENCODING: Charset = StandardCharsets.UTF_8
 
   def parse(s: String): MessageResponse = {
@@ -73,6 +74,7 @@ object Message {
     out.flush()
     val responseMessage = if (scanner.hasNext) {
       val msg = scanner.next()
+      logger.debug(s"responseraw:$msg")
       parse(msg)
     } else {
       ErrorMessage(None, MessageType.ERROR, None, "No repsonse.")
