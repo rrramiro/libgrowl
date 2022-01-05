@@ -1,5 +1,9 @@
-bin
-/.project
-/.classpath
+.project
 target
 .idea
+.history
+.metals
+.bloop
+.vscode
+.bsp
+metals.sbt
